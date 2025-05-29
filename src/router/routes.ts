@@ -13,6 +13,31 @@ export const asyncRoutes: RouteRecordRaw[] = [
         component: () => import('@/views/Home.vue'),
       },
       {
+        path: 'vueBase',
+        name: 'VueBase',
+        meta: { title: 'vue基础', icon: 'Setting' },
+        children: [
+          {
+            path: 'template-syntax',
+            name: 'template-syntax',
+            meta: { title: '模版语法' },
+            component: () => import('@/views/vueBase/01TemplateSyntax.vue'),
+          },
+          {
+            path: 'reactivity',
+            name: 'Reactivity',
+            meta: { title: '响应式基础' },
+            component: () => import('@/views/vueBase/02Reactivity.vue'),
+          },
+          {
+            path: 'computed',
+            name: 'Computed',
+            meta: { title: '计算属性' },
+            component: () => import('@/views/vueBase/03Computed.vue'),
+          }
+        ],
+      },
+      {
         path: 'system',
         name: 'System',
         meta: { title: '系统管理', icon: 'Setting' },
