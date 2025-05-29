@@ -34,7 +34,13 @@ export const asyncRoutes: RouteRecordRaw[] = [
             name: 'Computed',
             meta: { title: '计算属性' },
             component: () => import('@/views/vueBase/03Computed.vue'),
-          }
+          },
+          {
+            path: 'classAndStyle',
+            name: 'ClassAndStyle',
+            meta: { title: 'Class与Style绑定' },
+            component: () => import('@/views/vueBase/04ClassAndStyle.vue'),
+          },
         ],
       },
       {
