@@ -47,6 +47,13 @@ export const asyncRoutes: RouteRecordRaw[] = [
             meta: { title: '条件渲染' },
             component: () => import('@/views/vueBase/05Conditional.vue'),
           },
+          {
+            path: 'listView',
+            name: 'ListView',
+            meta: { title: '列表渲染' },
+            component: () => import('@/views/vueBase/06ListView.vue'),
+          },
+          
         ],
       },
       {
