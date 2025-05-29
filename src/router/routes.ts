@@ -41,6 +41,12 @@ export const asyncRoutes: RouteRecordRaw[] = [
             meta: { title: 'Class与Style绑定' },
             component: () => import('@/views/vueBase/04ClassAndStyle.vue'),
           },
+          {
+            path: 'conditional',
+            name: 'Conditional',
+            meta: { title: '条件渲染' },
+            component: () => import('@/views/vueBase/05Conditional.vue'),
+          },
         ],
       },
       {
