@@ -1,36 +1,11 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import type { RouteRecordRaw } from 'vue-router'
-import { useAuthStore } from '@/store/auth'
-
-const routes: RouteRecordRaw[] = [
-  {
-    path: '/login',
-    name: 'Login',
-    component: () => import('@/views/Login.vue'),
-  },
-  {
-    path: '/',
-    name: 'Home',
-    component: () => import('@/views/Home.vue'),
-    meta: { requiresAuth: true },
-  },
-]
+import { createRouter, createWebHistory } from 'vue-router';
+import { constantRoutes, asyncRoutes } from './routes';
+import { setupRouterGuard } from './guard';
 
 const router = createRouter({
   history: createWebHistory(),
-  routes,
-})
+  routes: [...constantRoutes, ...asyncRoutes],
+});
 
-router.beforeEach((to, from, next) => {
-  const auth = useAuthStore()
-
-  if (to.meta.requiresAuth && !auth.token) {
-    next('/login')
-  } else if (to.path === '/login' && auth.token) {
-    next('/')
-  } else {
-    next()
-  }
-})
-
-export default router
+setupRouterGuard(router);
+export default router;
