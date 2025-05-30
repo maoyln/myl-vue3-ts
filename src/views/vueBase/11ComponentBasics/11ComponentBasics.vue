@@ -1,0 +1,104 @@
+<template>
+  <div>
+    <h1>
+      <a
+        href="https://cn.vuejs.org/guide/essentials/component-basics.html"
+        target="_blank"
+        >组件基础
+      </a>
+    </h1>
+
+    <div>
+      <h2>定义一个组件</h2>
+      <Child01 />
+      <Child01 />
+      <Child02 />
+    </div>
+
+    <hr />
+
+    <div>
+      <h2>使用组件</h2>
+      <ButtonCounter />
+      <ButtonCounter />
+      <hr />
+      <h2>在 DOM 中书写该模板</h2>
+      <button-counter></button-counter>
+    </div>
+
+    <hr />
+    <div>
+      <h2>传参props</h2>
+      <BlogPost title="这是一个参数，在子组件中显示" />
+      <BlogPost02 title="这是一个参数，在子组件中显示" />
+    </div>
+
+    <hr />
+    <div>
+      <h2>组件循环</h2>
+      <BlogPost v-for="post in posts" :key="post.id" :title="post.title" />
+    </div>
+    <hr>
+
+    <div>
+      <h2>监听事件</h2>
+      <div :style="{ fontSize: postFontSize + 'em' }">
+        <BlogPost03
+          v-for="post in posts"
+          :key="post.id"
+          :title="post.title"
+          @enlarge-text="postFontSize += 0.1"
+          @small-text="postFontSize -= 0.1"
+         />
+      </div>
+
+      <hr>
+      <div>
+        <h2>defineEmits</h2>
+        <div :style="{ fontSize: postFontSize + 'em' }">
+          <BlogPost04
+            v-for="post in posts"
+            :key="post.id"
+            :title="post.title"
+            @enlarge-text="postFontSize += 0.1"
+            @small-text="postFontSize -= 0.1"
+           />
+        </div>
+      </div>
+
+      <hr>
+      <div>
+        <h2>使用setup()</h2>
+        <div :style="{ fontSize: postFontSize + 'em' }">
+          <BlogPost05
+            v-for="post in posts"
+            :key="post.id"
+            :title="post.title"
+            @enlarge-text="postFontSize += 0.1"
+            @small-text="postFontSize -= 0.1"
+           />
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from "vue";
+import Child01 from "./components/Child01.vue";
+import Child02 from "./components/Child02.vue";
+import ButtonCounter from "./components/ButtonCounter.vue";
+import BlogPost from "./components/BlogPost.vue";
+import BlogPost02 from "./components/BlogPost02.vue";
+import BlogPost03 from "./components/BlogPost03.vue";
+import BlogPost04 from "./components/BlogPost04.vue";
+import BlogPost05 from "./components/BlogPost05.vue";
+
+const posts = ref([
+  { id: 1, title: "My journey with Vue" },
+  { id: 2, title: "Blogging with Vue" },
+  { id: 3, title: "Why Vue is so fun" },
+]);
+
+const postFontSize = ref(1)
+</script>
