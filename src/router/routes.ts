@@ -65,7 +65,12 @@ export const asyncRoutes: RouteRecordRaw[] = [
             meta: { title: '表单输入绑定' },
             component: () => import('@/views/vueBase/08FormsTem.vue'),
           },
-
+          {
+            path: 'watchers',
+            name: 'Watchers',
+            meta: { title: '监听器' },
+            component: () => import('@/views/vueBase/09Watchers.vue'),
+          },
           
         ],
       },
