@@ -80,6 +80,14 @@
         </div>
       </div>
     </div>
+
+    <hr>
+    <div>
+      <h2>通过插槽来分配内容</h2>
+      <alert-box>
+        这里来演示一个插槽-改文本为传入内容
+      </alert-box>
+    </div>
   </div>
 </template>
 
@@ -93,6 +101,7 @@ import BlogPost02 from "./components/BlogPost02.vue";
 import BlogPost03 from "./components/BlogPost03.vue";
 import BlogPost04 from "./components/BlogPost04.vue";
 import BlogPost05 from "./components/BlogPost05.vue";
+import AlertBox from "./components/AlertBox.vue";
 
 const posts = ref([
   { id: 1, title: "My journey with Vue" },
