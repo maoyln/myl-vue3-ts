@@ -53,6 +53,12 @@ export const asyncRoutes: RouteRecordRaw[] = [
             meta: { title: '列表渲染' },
             component: () => import('@/views/vueBase/06ListView.vue'),
           },
+          {
+            path: 'eventHandling',
+            name: 'EventHandling',
+            meta: { title: '事件处理' },
+            component: () => import('@/views/vueBase/07EventHandling.vue'),
+          },
           
         ],
       },
