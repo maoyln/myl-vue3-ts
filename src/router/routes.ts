@@ -94,6 +94,25 @@ export const asyncRoutes: RouteRecordRaw[] = [
         ],
       },
       {
+        path: 'depth-components',
+        name: 'DepthComponents',
+        meta: { title: '深入组件', icon: 'Components' },
+        children: [
+          {
+            path: 'registration',
+            name: 'Registration',
+            meta: { title: '注册' },
+            component: () => import('@/views/DepthComponents/01Registration.vue'),
+          },
+          {
+            path: 'role',
+            name: 'Role',
+            meta: { title: '职位管理' },
+            component: () => import('@/views/system/Role.vue'),
+          },
+        ],
+      },
+      {
         path: 'system',
         name: 'System',
         meta: { title: '系统管理', icon: 'Setting' },
