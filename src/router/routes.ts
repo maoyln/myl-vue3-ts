@@ -83,6 +83,13 @@ export const asyncRoutes: RouteRecordRaw[] = [
             meta: { title: '组件基础' },
             component: () => import('@/views/vueBase/11ComponentBasics/11ComponentBasics.vue'),
           },
+          {
+            path: 'lifecycle',
+            name: 'Lifecycle',
+            meta: { title: '声明周期' },
+            component: () => import('@/views/vueBase/12Lifecycle.vue'),
+          },
+
           
         ],
       },
