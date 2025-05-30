@@ -71,7 +71,12 @@ export const asyncRoutes: RouteRecordRaw[] = [
             meta: { title: '监听器' },
             component: () => import('@/views/vueBase/09Watchers.vue'),
           },
-          
+          {
+            path: 'template-refs',
+            name: 'TemplateRefs',
+            meta: { title: '模版引用' },
+            component: () => import('@/views/vueBase/10TemplateRefs/10TemplateRefs.vue'),
+          },
         ],
       },
       {
