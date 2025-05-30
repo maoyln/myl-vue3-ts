@@ -38,7 +38,7 @@
       <h2>组件循环</h2>
       <BlogPost v-for="post in posts" :key="post.id" :title="post.title" />
     </div>
-    <hr>
+    <hr />
 
     <div>
       <h2>监听事件</h2>
@@ -49,10 +49,10 @@
           :title="post.title"
           @enlarge-text="postFontSize += 0.1"
           @small-text="postFontSize -= 0.1"
-         />
+        />
       </div>
 
-      <hr>
+      <hr />
       <div>
         <h2>defineEmits</h2>
         <div :style="{ fontSize: postFontSize + 'em' }">
@@ -62,11 +62,11 @@
             :title="post.title"
             @enlarge-text="postFontSize += 0.1"
             @small-text="postFontSize -= 0.1"
-           />
+          />
         </div>
       </div>
 
-      <hr>
+      <hr />
       <div>
         <h2>使用setup()</h2>
         <div :style="{ fontSize: postFontSize + 'em' }">
@@ -76,17 +76,36 @@
             :title="post.title"
             @enlarge-text="postFontSize += 0.1"
             @small-text="postFontSize -= 0.1"
-           />
+          />
         </div>
+      </div>
+    </div>
+
+    <hr />
+    <div>
+      <h2>通过插槽来分配内容</h2>
+      <alert-box> 这里来演示一个插槽-改文本为传入内容 </alert-box>
+    </div>
+
+    <hr />
+    <div>
+      <h2>动态组件</h2>
+      <!-- currentTab 改变时组件也改变 -->
+      <component :is="AlertBox"></component>
+      <div>
+        在上面的例子中，被传给 :is 的值可以是以下几种：
+        <ul>
+          <li>被注册的组件名</li>
+          <li>导入的组件对象</li>
+        </ul>
       </div>
     </div>
 
     <hr>
     <div>
-      <h2>通过插槽来分配内容</h2>
-      <alert-box>
-        这里来演示一个插槽-改文本为传入内容
-      </alert-box>
+      <h2>DOM 内模板解析注意事项</h2>
+      <h3>大小写区分</h3>
+      <!-- <blog-post-in post-title="hello!" @update-post="onUpdatePost"></blog-post-in> -->
     </div>
   </div>
 </template>
@@ -109,5 +128,18 @@ const posts = ref([
   { id: 3, title: "Why Vue is so fun" },
 ]);
 
-const postFontSize = ref(1)
+const postFontSize = ref(1);
+
+// JavaScript 中的 camelCase
+// const BlogPostIn = {
+//   props: ['postTitle'],
+//   emits: ['updatePost'],
+//   template: `
+//     <h3>{{ postTitle }}</h3>
+//   `
+// }
+
+// const onUpdatePost = () => {
+//   console.log("update post");
+// }
 </script>
