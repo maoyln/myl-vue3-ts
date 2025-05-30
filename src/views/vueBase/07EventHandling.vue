@@ -105,6 +105,50 @@
     <hr>
 
 
+    <div>
+      <h2>按键修饰符</h2>
+
+      <h5>按键别名</h5>
+      <ul>
+        <li>.enter: 按下回车键</li>
+        <li>.tab: 按下 Tab 键</li>
+        <li>.delete: 按下删除键 (捕获“Delete”和“Backspace”两个按键)</li>
+        <li>.esc: 按下 Esc 键</li>
+        <li>.space: 按下空格键</li>
+        <li>.up: 按下上方向键</li>
+        <li>.down: 按下下方向键</li>
+        <li>.left: 按下左方向键</li>
+        <li>.right: 按下右方向键</li>
+      </ul>
+
+      <h5>系统按键修饰符</h5>
+      <ul>
+        <li>.ctrl: 按下 Ctrl 键</li>
+        <li>.shift: 按下 Shift 键</li>
+        <li>.alt: 按下 Alt 键</li>
+        <li>.meta: 按下 Meta 键 (Command 键在 Mac 上)</li>
+      </ul>
+
+      <!-- Alt(Mac:option) + Enter -->
+      <input @keyup.alt.enter="clear" />
+
+      <!-- Ctrl + 点击 -->
+      <button @click.shift="doSomething">按下ctrl键+点击</button>
+    </div>
+
+    <div>
+      <h2>.exact 修饰符</h2>
+
+      <!-- 当按下 alt 时，即使同时按下 Alt 或 Shift 也会触发 -->
+      <button @click.alt="onClick">.alt</button>
+
+      <!-- 仅当按下 alt 且未按任何其他键时才会触发 -->
+      <button @click.alt.exact="onClick">.alt.exact</button>
+
+      <!-- 仅当没有按下任何系统按键时触发 -->
+      <button @click.exact="onClick">.exact</button>
+    </div>
+
   </div>
 </template>
 
@@ -144,6 +188,21 @@ function warn(message: string, event: Event) {
 function doClickModifier(event: any) {
   console.log(event)
   console.log('doClickModifier')
+}
+
+function clear(event: any) {
+  console.log(event)
+  console.log('clear')
+}
+
+function doSomething(event: any) {
+  console.log(event)
+  console.log('doSomething')
+}
+
+function onClick(event: any) {
+  console.log(event)
+  console.log('onClick')
 }
 
 </script>

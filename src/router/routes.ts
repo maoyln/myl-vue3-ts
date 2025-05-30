@@ -59,6 +59,13 @@ export const asyncRoutes: RouteRecordRaw[] = [
             meta: { title: '事件处理' },
             component: () => import('@/views/vueBase/07EventHandling.vue'),
           },
+          {
+            path: 'formsTem',
+            name: 'FormsTem',
+            meta: { title: '表单输入绑定' },
+            component: () => import('@/views/vueBase/08FormsTem.vue'),
+          },
+
           
         ],
       },
