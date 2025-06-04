@@ -28,6 +28,12 @@
       <h2>setup外--声明触发的事件</h2>
       <MyComponent04 @in-focus="handleInFocus" @submit="handleSubmit"/>
     </div>
+
+    <div>
+      <h2>事件校验</h2>
+      <MyComponent05 @submit-form="handleSubmitForm"/>
+    </div>
+    
   </div>
 
 
@@ -39,6 +45,7 @@ import MyComponent01 from './components/MyComponent01.vue'
 import MyComponent02 from './components/MyComponent02.vue'
 import MyComponent03 from './components/MyComponent03.vue'
 import MyComponent04 from './components/MyComponent04.vue'
+import MyComponent05 from './components/MyComponent05.vue'
 const callback = () => {
   console.log(111);
 }
@@ -56,5 +63,10 @@ const handleInFocus = (num: number) => {
 
 const handleSubmit = () => {
   console.log('submit--外部');
+}
+
+const handleSubmitForm = (form: any) => {
+  console.log(form, 'submitForm--外部');
+  console.log('submitForm--外部');
 }
 </script>
