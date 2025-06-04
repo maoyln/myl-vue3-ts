@@ -41,6 +41,17 @@
       <h2>响应式 Props 解构--默认值</h2>
       <Child07 />
     </div>
+
+    <div>
+      <h2>将解构的 props 传递到函数中</h2>
+      <Child08 :foo="num" />
+      <button @click="num++">num++</button>
+    </div>
+
+    <div>
+      <h2>Prop 名字格式</h2>
+      <Child09 greeting-message="hello-传值为【greeting-message】，接受为【greetingMessage】" />
+    </div>
   </div>
 </template>
 
@@ -53,6 +64,8 @@ import Child04 from "./components/Child04.vue";
 import Child05 from "./components/Child05.vue";
 import Child06 from "./components/Child06.vue";
 import Child07 from "./components/Child07.vue";
+import Child08 from "./components/Child08.vue";
+import Child09 from "./components/Child09.vue";
 
 const num = ref(10) // 10
 </script>
