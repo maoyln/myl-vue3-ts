@@ -1,6 +1,6 @@
 <template>
   <div>
-    <button @click="$emit('someEvent')">Click Me{{props.msg}}</button>
+    <button @click="$emit('increaseBy', 1)">Click Me{{props.msg}}</button>
   </div>
 </template>
 
@@ -10,5 +10,6 @@ const props = defineProps({
     type: String,
     required: true,
   }
+
 })
 </script>

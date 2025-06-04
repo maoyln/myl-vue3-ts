@@ -110,6 +110,14 @@ export const asyncRoutes: RouteRecordRaw[] = [
             meta: { title: 'Props' },
             component: () => import('@/views/DepthComponents/02Props/02Props.vue'),
           },
+          {
+            path: 'events',
+            name: 'Events',
+            meta: { title: '事件' },
+            component: () => import('@/views/DepthComponents/03Events/03Events.vue'),
+          },
+
+          
         ],
       },
       {
