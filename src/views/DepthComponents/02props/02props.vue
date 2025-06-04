@@ -50,7 +50,14 @@
 
     <div>
       <h2>Prop 名字格式</h2>
-      <Child09 greeting-message="hello-传值为【greeting-message】，接受为【greetingMessage】" />
+      <Child09 greeting-message="hello-传值为【greeting-message】，接受为【greetingMessage】--一个参数" />
+    </div>
+
+    <div>
+      <h2>静态 vs. 动态 Props</h2>
+      <Child09 :num="num" greeting-message="hello-传值为【greeting-message】，接受为【greetingMessage】--两个参数" />
+      
+      <button @click="num++">num++</button>
     </div>
   </div>
 </template>
