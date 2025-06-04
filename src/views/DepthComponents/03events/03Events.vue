@@ -18,6 +18,16 @@
       <MyComponent02 msg="这是参数" @increase-by="handleIncrease" />
       <MyComponent02 msg="组件的事件监听器也支持 .once 修饰符-once只能点击一次" @increase-by.once="handleIncrease" />
     </div>
+
+    <div>
+      <h2>声明触发的事件</h2>
+      <MyComponent03 msg="这是参数" @in-focus="handleInFocus" @submit="handleSubmit"/>
+    </div>
+
+    <div>
+      <h2>setup外--声明触发的事件</h2>
+      <MyComponent04 @in-focus="handleInFocus" @submit="handleSubmit"/>
+    </div>
   </div>
 
 
@@ -27,6 +37,8 @@
 import { ref } from "vue";
 import MyComponent01 from './components/MyComponent01.vue'
 import MyComponent02 from './components/MyComponent02.vue'
+import MyComponent03 from './components/MyComponent03.vue'
+import MyComponent04 from './components/MyComponent04.vue'
 const callback = () => {
   console.log(111);
 }
@@ -36,5 +48,13 @@ const numb = ref(0)
 const handleIncrease = (num: number) => {
   console.log(num);
   numb.value += num
+}
+
+const handleInFocus = (num: number) => {
+  console.log(num, 'focus--外部');
+}
+
+const handleSubmit = () => {
+  console.log('submit--外部');
 }
 </script>
