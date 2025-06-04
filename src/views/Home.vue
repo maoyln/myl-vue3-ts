@@ -7,9 +7,9 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/store/auth'
+import { useUserStore } from '@/store/user'
 
-const auth = useAuthStore()
+const auth = useUserStore()
 const router = useRouter()
 
 const logout = () => {
