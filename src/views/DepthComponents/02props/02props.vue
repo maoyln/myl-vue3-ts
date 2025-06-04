@@ -36,6 +36,11 @@
       <Child06 :foo="num" />
       <button @click="num++">num++</button>
     </div>
+
+    <div>
+      <h2>响应式 Props 解构--默认值</h2>
+      <Child07 />
+    </div>
   </div>
 </template>
 
@@ -47,6 +52,7 @@ import Child03 from "./components/Child03.vue";
 import Child04 from "./components/Child04.vue";
 import Child05 from "./components/Child05.vue";
 import Child06 from "./components/Child06.vue";
+import Child07 from "./components/Child07.vue";
 
 const num = ref(10) // 10
 </script>
