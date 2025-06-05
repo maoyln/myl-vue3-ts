@@ -122,6 +122,13 @@ export const asyncRoutes: RouteRecordRaw[] = [
             meta: { title: '组件v-model' },
             component: () => import('@/views/DepthComponents/04VModel/04VModel.vue'),
           },
+          {
+            path: 'Attrs',
+            name: 'Attrs',
+            meta: { title: '组件v-model' },
+            component: () => import('@/views/DepthComponents/05Attrs/05Attrs.vue'),
+          },
+          
           
         ],
       },
