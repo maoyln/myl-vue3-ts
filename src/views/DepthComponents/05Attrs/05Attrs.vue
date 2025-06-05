@@ -30,12 +30,29 @@
     </div>
     <hr>
 
+    <div>
+      <h2>v-on 监听器继承</h2>
+      <div>这个监听器和从父组件继承的监听器都会被触发</div>
+      <br>
+      
+      <div>
+        <Child03 class="red" style="font-size: 20px" id="child01" @click="handleFakeClick" />
+      </div>
+    </div>
+    <hr>
+
   </div>
 </template>
 
 <script setup>
 import Child01 from './components/Child01.vue';
 import Child02 from './components/Child02.vue';
+import Child03 from './components/Child03.vue';
+
+function handleFakeClick() {
+  console.log('父亲组件的点击事件，不会触发子组件');
+}
+
 </script>
 
 <style>
