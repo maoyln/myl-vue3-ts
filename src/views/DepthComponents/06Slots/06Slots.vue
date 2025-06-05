@@ -140,7 +140,37 @@
 
     </div>
   </div>
+  <hr>
 
+  <div>
+    <h2>作用域插槽</h2>
+    <div>
+      <Child07  v-slot="slotProps">
+        {{ slotProps.text }} {{ slotProps.count }}
+      </Child07>
+    </div>
+  </div>
+
+  <hr>
+
+  <div>
+    <h2>具名作用域插槽</h2>
+    <div>
+      <Child08>
+        <template #header="headerProps">
+          {{ headerProps }}
+        </template>
+      
+        <template #default="defaultProps">
+          {{ defaultProps }}
+        </template>
+      
+        <template #footer="footerProps">
+          {{ footerProps }}
+        </template>
+      </Child08>
+    </div>
+  </div>
 
 </div>
 </template>
@@ -154,6 +184,8 @@ import Child03 from './components/Child03.vue'
 import Child04 from './components/Child04.vue'
 import Child05 from './components/Child05.vue'
 import Child06 from './components/Child06.vue'
+import Child07 from './components/Child07.vue'
+import Child08 from './components/Child08.vue'
 import AwesomeIcon from './components/AwesomeIcon.vue'
 
 const dynamicSlotName = ref('header')
