@@ -140,6 +140,12 @@ export const asyncRoutes: RouteRecordRaw[] = [
             meta: { title: '依赖注入' },
             component: () => import('@/views/DepthComponents/07ProvideInject/07ProvideInject.vue'),
           },
+          {
+            path: 'async',
+            name: 'Async',
+            meta: { title: '异步组件' },
+            component: () => import('@/views/DepthComponents/08Async/08Async.vue'),
+          },
           
           
         ],
