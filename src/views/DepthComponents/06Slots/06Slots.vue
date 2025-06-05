@@ -172,6 +172,33 @@
     </div>
   </div>
 
+  <hr>
+
+  <div>
+    <h2>高级列表组件示例</h2>
+    <div>
+      <Child09 api-url="url" :per-page="10">
+        <template #item="{ body, username, likes }">
+          <div class="item">
+            <p>{{ body }}</p>
+            <p class="meta">by {{ username }} | {{ likes }} likes</p>
+          </div>
+        </template>
+      </Child09>
+    </div>
+  </div>
+
+  <hr>
+
+  <div>
+    <h2>无渲染组件</h2>
+    <div>
+      <Child10 v-slot="{ x, y }">
+        Mouse is at: {{ x }}, {{ y }}
+      </Child10>
+    </div>
+  </div>
+
 </div>
 </template>
 
@@ -186,8 +213,17 @@ import Child05 from './components/Child05.vue'
 import Child06 from './components/Child06.vue'
 import Child07 from './components/Child07.vue'
 import Child08 from './components/Child08.vue'
+import Child09 from './components/Child09.vue'
+import Child10 from './components/Child10.vue'
 import AwesomeIcon from './components/AwesomeIcon.vue'
 
 const dynamicSlotName = ref('header')
 
 </script>
+
+<style scoped>
+.meta {
+  font-size: 0.8em;
+  color: #42b883;
+}
+</style>
