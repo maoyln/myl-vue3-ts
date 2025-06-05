@@ -123,10 +123,16 @@ export const asyncRoutes: RouteRecordRaw[] = [
             component: () => import('@/views/DepthComponents/04VModel/04VModel.vue'),
           },
           {
-            path: 'Attrs',
+            path: 'attrs',
             name: 'Attrs',
-            meta: { title: '组件v-model' },
+            meta: { title: '透传 Attributes' },
             component: () => import('@/views/DepthComponents/05Attrs/05Attrs.vue'),
+          },
+          {
+            path: 'slots',
+            name: 'Slots',
+            meta: { title: '插槽 Slots' },
+            component: () => import('@/views/DepthComponents/06Slots/06Slots.vue'),
           },
           
           
