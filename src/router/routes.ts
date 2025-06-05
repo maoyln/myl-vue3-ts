@@ -134,6 +134,12 @@ export const asyncRoutes: RouteRecordRaw[] = [
             meta: { title: '插槽 Slots' },
             component: () => import('@/views/DepthComponents/06Slots/06Slots.vue'),
           },
+          {
+            path: 'provide-inject',
+            name: 'ProvideInject',
+            meta: { title: '依赖注入' },
+            component: () => import('@/views/DepthComponents/07ProvideInject/07ProvideInject.vue'),
+          },
           
           
         ],
