@@ -25,7 +25,7 @@
       <br>
       
       <div>
-        <Child02 class="red" style="font-size: 20px" id="child01" />
+        <Child02 class="red" style="font-size: 20px" id="child02" />
       </div>
     </div>
     <hr>
@@ -36,7 +36,7 @@
       <br>
       
       <div>
-        <Child03 class="red" style="font-size: 20px" id="child01" @click="handleFakeClick" />
+        <Child03 class="red" style="font-size: 20px" id="child03" @click="handleFakeClick" />
       </div>
     </div>
     <hr>
@@ -47,7 +47,7 @@
       <br>
       
       <div>
-        <Child04 class="red" style="font-size: 20px" id="child01" @click="handleFakeClick" />
+        <Child04 class="red" style="font-size: 20px" id="child04" @click="handleFakeClick" />
       </div>
     </div>
     <hr>
@@ -58,7 +58,7 @@
       <br>
       
       <div>
-        <Child05 class="red" style="font-size: 20px" id="child01" @click="handleFakeClick" />
+        <Child05 class="red" style="font-size: 20px" id="child05" @click="handleFakeClick" />
       </div>
     </div>
     <hr>
@@ -70,7 +70,7 @@
       <br>
       
       <div>
-        <Child05 class="red" style="font-size: 20px" id="child01" @click="handleFakeClick" />
+        <Child06 class="red" style="font-size: 20px" id="child06" @click="handleFakeClick" />
       </div>
     </div>
     <hr>
@@ -84,6 +84,7 @@ import Child02 from './components/Child02.vue';
 import Child03 from './components/Child03.vue';
 import Child04 from './components/Child04.vue';
 import Child05 from './components/Child05.vue';
+import Child06 from './components/Child06.vue';
 
 function handleFakeClick() {
   console.log('父亲组件的点击事件，不会触发子组件');
