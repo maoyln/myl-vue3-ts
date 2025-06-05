@@ -86,7 +86,7 @@
     
       <template #default>
         <span style="color: red">
-          这是默人值
+          这是默人值-----默人值可以有多个
         </span>
         <p>主要内容的一段。</p>
         <p>还有另一个。</p>
@@ -98,15 +98,64 @@
     </Child04>
   </div>
   <hr>
+
+  <div>
+    <h2>条件插槽</h2>
+    <div>有时你需要根据内容是否被传入了插槽来渲染某些内容。</div>
+    <div>
+      你可以结合使用 $slots 属性与 v-if 来实现。
+    </div>
+    <div>
+      <Child05>
+        <template #header>
+          <h1>This is the header</h1>
+        </template>
+    
+        <template #default>
+          <p>This is the content</p>
+        </template>
+    
+        <template #footer>
+          <em>This is the footer</em>
+        </template>
+      </Child05>
+    </div>
+  </div>
+  <hr>
+
+  <div>
+    <h2>动态插槽名</h2>
+
+    <div>
+      <Child06>
+        <!-- <template v-slot:[dynamicSlotName]>
+          ...这是一个头部--全称
+        </template> -->
+      
+        <!-- 缩写为 -->
+        <template #[dynamicSlotName]>
+          这是一个头部--简写
+        </template>
+      </Child06>
+
+    </div>
+  </div>
+
+
 </div>
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import Child01 from './components/Child01.vue';
 
 import Child02 from './components/Child02.vue'
 import Child03 from './components/Child03.vue'
 import Child04 from './components/Child04.vue'
+import Child05 from './components/Child05.vue'
+import Child06 from './components/Child06.vue'
 import AwesomeIcon from './components/AwesomeIcon.vue'
+
+const dynamicSlotName = ref('header')
 
 </script>
