@@ -36,6 +36,7 @@
       </div>
     </div>
 
+    <hr />
     <div>
       <h2>底层机制</h2>
       <div>defineModel 是一个便利宏。编译器将其展开为以下内容：</div>
@@ -48,11 +49,40 @@
       <br />
       <div>
         <div>孩子组件如下：</div>
-        <div>输入值：{{foo}}</div>
+        <div>输入值：{{ foo }}</div>
         <Child02
           :modelValue="foo"
           @update:modelValue="($event) => (foo = $event)"
         />
+      </div>
+    </div>
+
+    <hr />
+
+    <div>
+      <h2>v-model 的参数</h2>
+      <div>组件上的 v-model 也可以接受一个参数：</div>
+
+      <br />
+      <div>
+        <div>孩子组件如下：</div>
+        <div>输入值：{{ bookTitle }}</div>
+        <Child03 v-model:title="bookTitle" />
+      </div>
+    </div>
+
+    <hr />
+
+    <div>
+      <h2>多个 v-model 绑定</h2>
+      <div>组件上的每一个 v-model 都会同步不同的 prop，而无需额外的选项：</div>
+
+      <br />
+      <div>
+        <div>孩子组件如下：</div>
+        <div>输入值first：{{ first }}; 输入值last：{{ last }}</div>
+
+        <Child04 v-model:first-name="first" v-model:last-name="last" />
       </div>
     </div>
 
@@ -64,7 +94,13 @@
 import { ref } from "vue";
 import Child01 from "./components/Child01.vue";
 import Child02 from "./components/Child02.vue";
+import Child03 from "./components/Child03.vue";
+import Child04 from "./components/Child04.vue";
 
 const model = ref(0);
-const foo = ref('');
+const foo = ref("");
+const bookTitle = ref("这是一个标题参数");
+
+const first = ref("");
+const last = ref("");
 </script>
