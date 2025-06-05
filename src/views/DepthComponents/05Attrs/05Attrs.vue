@@ -58,7 +58,19 @@
       <br>
       
       <div>
-        <Child04 class="red" style="font-size: 20px" id="child01" @click="handleFakeClick" />
+        <Child05 class="red" style="font-size: 20px" id="child01" @click="handleFakeClick" />
+      </div>
+    </div>
+    <hr>
+
+    <div>
+      <h2>在 JavaScript 中访问透传 Attributes</h2>
+      <div>import { useAttrs } from 'vue'</div>
+      <div>const attrs = useAttrs()</div>
+      <br>
+      
+      <div>
+        <Child05 class="red" style="font-size: 20px" id="child01" @click="handleFakeClick" />
       </div>
     </div>
     <hr>
@@ -71,6 +83,7 @@ import Child01 from './components/Child01.vue';
 import Child02 from './components/Child02.vue';
 import Child03 from './components/Child03.vue';
 import Child04 from './components/Child04.vue';
+import Child05 from './components/Child05.vue';
 
 function handleFakeClick() {
   console.log('父亲组件的点击事件，不会触发子组件');
