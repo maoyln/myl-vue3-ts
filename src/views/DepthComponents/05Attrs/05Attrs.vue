@@ -41,6 +41,28 @@
     </div>
     <hr>
 
+    <div>
+      <h2>禁用 Attributes 继承</h2>
+      <div>如果你不想要一个组件自动地继承 attribute，你可以在组件选项中设置 inheritAttrs: false。</div>
+      <br>
+      
+      <div>
+        <Child04 class="red" style="font-size: 20px" id="child01" @click="handleFakeClick" />
+      </div>
+    </div>
+    <hr>
+
+    <div>
+      <h2>多根节点的 Attributes 继承</h2>
+      <div>如果你不想要一个组件自动地继承 attribute，你可以在组件选项中设置 inheritAttrs: false。</div>
+      <br>
+      
+      <div>
+        <Child04 class="red" style="font-size: 20px" id="child01" @click="handleFakeClick" />
+      </div>
+    </div>
+    <hr>
+
   </div>
 </template>
 
@@ -48,6 +70,7 @@
 import Child01 from './components/Child01.vue';
 import Child02 from './components/Child02.vue';
 import Child03 from './components/Child03.vue';
+import Child04 from './components/Child04.vue';
 
 function handleFakeClick() {
   console.log('父亲组件的点击事件，不会触发子组件');
