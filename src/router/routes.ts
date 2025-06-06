@@ -194,6 +194,12 @@ export const asyncRoutes: RouteRecordRaw[] = [
             meta: { title: 'KeepAlive' },
             component: () => import('@/views/BuiltInComponents/03KeepAlive/03KeepAlive.vue'),
           },
+          {
+            path: 'teleport',
+            name: 'Teleport',
+            meta: { title: 'Teleport' },
+            component: () => import('@/views/BuiltInComponents/04Teleport/04Teleport.vue'),
+          },
           
         ],
       },
