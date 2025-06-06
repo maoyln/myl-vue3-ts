@@ -167,6 +167,12 @@ export const asyncRoutes: RouteRecordRaw[] = [
             meta: { title: '自定义指令' },
             component: () => import('@/views/LogicReuse/02CustomDirectives/02CustomDirectives.vue'),
           },
+          {
+            path: 'plugins',
+            name: 'Plugins',
+            meta: { title: '插件' },
+            component: () => import('@/views/LogicReuse/03Plugins/03Plugins.vue'),
+          },
           
         ],
       },
