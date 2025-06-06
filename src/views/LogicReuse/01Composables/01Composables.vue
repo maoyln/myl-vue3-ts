@@ -8,7 +8,7 @@
     >
   </h1>
   <div>
-    <template>Mouse position is at: {{ x }}, {{ y }}</template>
+    <div>Mouse position is at: {{ x }}, {{ y }}</div>
   </div>
 </div>
 </template>

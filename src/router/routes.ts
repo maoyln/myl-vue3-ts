@@ -151,6 +151,20 @@ export const asyncRoutes: RouteRecordRaw[] = [
         ],
       },
       {
+        path: 'logicReuse',
+        name: 'LogicReuse',
+        meta: { title: '逻辑复用', icon: 'logicReuse' },
+        children: [
+          {
+            path: 'composables',
+            name: 'Composables',
+            meta: { title: '组合式函数' },
+            component: () => import('@/views/LogicReuse/01Composables/01Composables.vue'),
+          },
+
+        ],
+      },
+      {
         path: 'system',
         name: 'System',
         meta: { title: '系统管理', icon: 'Setting' },
