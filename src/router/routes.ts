@@ -161,7 +161,13 @@ export const asyncRoutes: RouteRecordRaw[] = [
             meta: { title: '组合式函数' },
             component: () => import('@/views/LogicReuse/01Composables/01Composables.vue'),
           },
-
+          {
+            path: 'custom-directives',
+            name: 'CustomDirectives',
+            meta: { title: '自定义指令' },
+            component: () => import('@/views/LogicReuse/02CustomDirectives/02CustomDirectives.vue'),
+          },
+          
         ],
       },
       {
