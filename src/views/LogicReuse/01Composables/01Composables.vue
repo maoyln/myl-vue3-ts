@@ -8,7 +8,10 @@
     >
   </h1>
   <div>
-    <div>Mouse position is at: {{ x }}, {{ y }}</div>
+    <div>
+      <h2>鼠标跟踪器示例-组合式函数实例</h2>
+      <div>Mouse position is at: {{ x }}, {{ y }}</div>
+    </div>
   </div>
 </div>
 </template>
