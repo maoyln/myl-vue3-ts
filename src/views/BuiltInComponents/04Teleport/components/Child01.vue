@@ -8,8 +8,8 @@ const open = ref(false)
   <button @click="open = true">Open Modal</button>
 
   <div v-if="open" class="modal">
-    <p>Hello from the modal!</p>
-    <button @click="open = false">Close</button>
+    <p>我在当前组织的dom下</p>
+    <button @click="open = false">关闭</button>
   </div>
 </template>
 
@@ -23,5 +23,7 @@ const open = ref(false)
   margin-left: -150px;
   background: greenyellow;
   border: 1px solid blue;
+  color: red;
+  text-align: center;
 }
 </style>

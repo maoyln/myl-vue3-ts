@@ -9,8 +9,8 @@ const open = ref(false)
 
   <Teleport to="body">
     <div v-if="open" class="modal">
-      <p>Hello from the modal!</p>
-      <button @click="open = false">Close</button>
+      <p>我被传送到了body下</p>
+      <button @click="open = false">关闭</button>
     </div>
   </Teleport>
 </template>
@@ -23,7 +23,9 @@ const open = ref(false)
   left: 50%;
   width: 300px;
   margin-left: -150px;
-  background: greenyellow;
+  background: yellow;
   border: 1px solid blue;
+  color: red;
+  text-align: center;
 }
 </style>
