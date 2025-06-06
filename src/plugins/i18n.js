@@ -1,6 +1,7 @@
 // plugins/i18n.js
 export default {
   install: (app, options) => {
+    // 方式一：
     // 注入一个全局可用的 $translate() 方法
     app.config.globalProperties.$translate = (key) => {
       // 获取 `options` 对象的深层属性
@@ -10,6 +11,7 @@ export default {
       }, options)
     }
 
+    // 方式二：
     // 上面下面二选一，这里就不做注释了
     app.provide('i18n', options)
   }

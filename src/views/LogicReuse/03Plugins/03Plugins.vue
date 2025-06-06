@@ -39,7 +39,9 @@
         <br>
         <div>下面是一个插件返回的内容</div>
         <div>
-          {{ $translate('greetings.hello') }}
+          方式一：{{ $translate('greetings.hello') }}
+          <br>
+          方式二：{{i18n.greetings.hello}}
         </div>
       </div>
     </div>
@@ -53,6 +55,7 @@
   import { getCurrentInstance, inject } from 'vue';
   const instance = getCurrentInstance();
   const app = instance.appContext.app;
+  // 方式一：
   app.use(i18nPlugin, {
     greetings: {
       hello: ['Bonjaour!', '1212', 1212] // '可以是任意值'
@@ -60,7 +63,8 @@
   })
 
 
+    
+  // 方式二：
     const i18n = inject('i18n')
-
     console.log(i18n.greetings.hello) //  ['Bonjaour!', '1212', 1212]
   </script>
