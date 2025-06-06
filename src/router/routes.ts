@@ -89,8 +89,6 @@ export const asyncRoutes: RouteRecordRaw[] = [
             meta: { title: '声明周期' },
             component: () => import('@/views/vueBase/12Lifecycle.vue'),
           },
-
-          
         ],
       },
       {
@@ -146,8 +144,6 @@ export const asyncRoutes: RouteRecordRaw[] = [
             meta: { title: '异步组件' },
             component: () => import('@/views/DepthComponents/08Async/08Async.vue'),
           },
-          
-          
         ],
       },
       {
@@ -173,9 +169,23 @@ export const asyncRoutes: RouteRecordRaw[] = [
             meta: { title: '插件' },
             component: () => import('@/views/LogicReuse/03Plugins/03Plugins.vue'),
           },
+        ],
+      },
+      {
+        path: 'builtIn-components',
+        name: 'BuiltInComponents',
+        meta: { title: '内置组件', icon: 'BuiltInComponents' },
+        children: [
+          {
+            path: 'transition',
+            name: 'Transition',
+            meta: { title: 'Transition' },
+            component: () => import('@/views/BuiltInComponents/01Transition/01Transition.vue'),
+          },
           
         ],
       },
+
       {
         path: 'system',
         name: 'System',
