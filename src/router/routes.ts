@@ -188,6 +188,12 @@ export const asyncRoutes: RouteRecordRaw[] = [
             meta: { title: 'TransitionGroup' },
             component: () => import('@/views/BuiltInComponents/02TransitionGroup/02TransitionGroup.vue'),
           },
+          {
+            path: 'keepAlive',
+            name: 'KeepAlive',
+            meta: { title: 'KeepAlive' },
+            component: () => import('@/views/BuiltInComponents/03KeepAlive/03KeepAlive.vue'),
+          },
           
         ],
       },
