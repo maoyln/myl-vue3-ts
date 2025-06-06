@@ -34,6 +34,9 @@ devDependencies:
   '@vue/tsconfig':
     specifier: ^0.7.0
     version: 0.7.0(typescript@5.8.3)(vue@3.5.16)
+  gsap:
+    specifier: ^3.13.0
+    version: 3.13.0
   typescript:
     specifier: ~5.8.3
     version: 5.8.3
@@ -990,6 +993,10 @@ packages:
     resolution: {integrity: sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg==, tarball: https://registry.npmmirror.com/gopd/-/gopd-1.2.0.tgz}
     engines: {node: '>= 0.4'}
     dev: false
+
+  /gsap@3.13.0:
+    resolution: {integrity: sha512-QL7MJ2WMjm1PHWsoFrAQH/J8wUeqZvMtHO58qdekHpCfhvhSL4gSiz6vJf5EeMP0LOn3ZCprL2ki/gjED8ghVw==, tarball: https://registry.npmmirror.com/gsap/-/gsap-3.13.0.tgz}
+    dev: true
 
   /has-symbols@1.1.0:
     resolution: {integrity: sha512-1cDNdwJ2Jaohmb3sg4OmKaMBwuC48sYni5HUw2DvsC8LjGTLK9h+eb1X6RyuOHe4hT0ULCW68iomhjUoKUqlPQ==, tarball: https://registry.npmmirror.com/has-symbols/-/has-symbols-1.1.0.tgz}
