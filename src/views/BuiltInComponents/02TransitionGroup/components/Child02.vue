@@ -1,33 +1,33 @@
 <script setup>
-import { ref, computed } from 'vue'
-import gsap from 'gsap'
+import { ref, computed } from "vue";
+import gsap from "gsap";
 
 const list = [
-  { msg: 'Bruce Lee' },
-  { msg: 'Jackie Chan' },
-  { msg: 'Chuck Norris' },
-  { msg: 'Jet Li' },
-  { msg: 'Kung Fury' }
-]
+  { msg: "Bruce Lee" },
+  { msg: "Jackie Chan" },
+  { msg: "Chuck Norris" },
+  { msg: "Jet Li" },
+  { msg: "Kung Fury" },
+];
 
-const query = ref('')
+const query = ref("");
 
 const computedList = computed(() => {
-  return list.filter((item) => item.msg.toLowerCase().includes(query.value))
-})
+  return list.filter((item) => item.msg.toLowerCase().includes(query.value));
+});
 
 function onBeforeEnter(el) {
-  el.style.opacity = 0
-  el.style.height = 0
+  el.style.opacity = 0;
+  el.style.height = 0;
 }
 
 function onEnter(el, done) {
   gsap.to(el, {
     opacity: 1,
-    height: '1.6em',
+    height: "1.6em",
     delay: el.dataset.index * 0.15,
-    onComplete: done
-  })
+    onComplete: done,
+  });
 }
 
 function onLeave(el, done) {
@@ -35,8 +35,8 @@ function onLeave(el, done) {
     opacity: 0,
     height: 0,
     delay: el.dataset.index * 0.15,
-    onComplete: done
-  })
+    onComplete: done,
+  });
 }
 </script>
 

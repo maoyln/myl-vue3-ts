@@ -12,21 +12,17 @@
         <h2>进入 / 离开动画</h2>
         <div><Child01 /></div>
       </div>
-      <hr>
+      <hr />
 
       <div>
         <h2>渐进延迟列表动画</h2>
         <div><Child02 /></div>
-        
       </div>
-
     </div>
   </div>
-  </template>
-  
-  <script setup>
-  import Child01 from './components/Child01.vue';
-  import Child02 from './components/Child02.vue';
+</template>
 
-
-  </script>
+<script setup>
+import Child01 from "./components/Child01.vue";
+import Child02 from "./components/Child02.vue";
+</script>

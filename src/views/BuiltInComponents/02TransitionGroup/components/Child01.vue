@@ -4,31 +4,31 @@ https://aerotwist.com/blog/flip-your-animations/
 -->
 
 <script setup>
-import { shuffle as _shuffle } from 'lodash-es'
-import { ref } from 'vue'
+import { shuffle as _shuffle } from "lodash-es";
+import { ref } from "vue";
 
-const getInitialItems = () => [1, 2, 3, 4, 5]
-const items = ref(getInitialItems())
-let id = items.value.length + 1
+const getInitialItems = () => [1, 2, 3, 4, 5];
+const items = ref(getInitialItems());
+let id = items.value.length + 1;
 
 function insert() {
-  const i = Math.round(Math.random() * items.value.length)
-  items.value.splice(i, 0, id++)
+  const i = Math.round(Math.random() * items.value.length);
+  items.value.splice(i, 0, id++);
 }
 
 function reset() {
-  items.value = getInitialItems()
-  id = items.value.length + 1
+  items.value = getInitialItems();
+  id = items.value.length + 1;
 }
 
 function shuffle() {
-  items.value = _shuffle(items.value)
+  items.value = _shuffle(items.value);
 }
 
 function remove(item) {
-  const i = items.value.indexOf(item)
+  const i = items.value.indexOf(item);
   if (i > -1) {
-    items.value.splice(i, 1)
+    items.value.splice(i, 1);
   }
 }
 </script>
