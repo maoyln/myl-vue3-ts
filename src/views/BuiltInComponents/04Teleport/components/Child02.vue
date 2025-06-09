@@ -1,7 +1,7 @@
 <script setup>
-import { ref } from 'vue'
+import { ref } from "vue";
 
-const open = ref(false)
+const open = ref(false);
 </script>
 
 <template>

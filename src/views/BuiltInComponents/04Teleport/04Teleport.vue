@@ -21,7 +21,6 @@
         <div><Child02 /></div>
       </div>
       <hr />
-
     </div>
   </div>
 </template>
