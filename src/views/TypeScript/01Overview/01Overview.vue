@@ -14,24 +14,31 @@
         <Child01 name="maoyl" msg="hello" />
       </div>
 
-      <hr>
+      <hr />
 
       <h2>常见使用说明 - defineComponent() - 范型使用</h2>
       <div>
         <Child02 foo="maoyl-foo" bar="hello-bar" />
-        <hr>
+        <hr />
         <Child03 foo="maoyl-foo-interface" bar="hello-interface" />
       </div>
-      <hr>
-        <Child03 foo="maoyl-foo-type" bar="hello-bar-type" />
+      <hr />
+      <Child04 foo="maoyl-foo-type" bar="hello-bar-type" />
     </div>
-    
-  </div>
-  </template>
-  
-  <script setup>
-  import Child01 from './components/Child01.vue';
-  import Child02 from './components/Child02.vue';
-  import Child03 from './components/Child03.vue';
 
-  </script>
+    <hr />
+
+    <h2>Props 解构默认值</h2>
+    <div>
+      <Child05 />
+    </div>
+  </div>
+</template>
+
+<script setup>
+import Child01 from "./components/Child01.vue";
+import Child02 from "./components/Child02.vue";
+import Child03 from "./components/Child03.vue";
+import Child04 from "./components/Child04.vue";
+import Child05 from "./components/Child05.vue";
+</script>
