@@ -203,6 +203,20 @@ export const asyncRoutes: RouteRecordRaw[] = [
           
         ],
       },
+      {
+        path: 'typeScript',
+        name: 'TypeScript',
+        meta: { title: 'TypeScript', icon: 'Setting' },
+        children: [
+          {
+            path: 'overview',
+            name: 'Overview',
+            meta: { title: '总览' },
+            component: () => import('@/views/TypeScript/01Overview/01Overview.vue'),
+          },
+          
+        ],
+      },
 
       {
         path: 'system',
