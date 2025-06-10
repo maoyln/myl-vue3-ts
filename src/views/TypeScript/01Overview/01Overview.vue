@@ -19,6 +19,8 @@
       <h2>常见使用说明 - defineComponent() - 范型使用</h2>
       <div>
         <Child02 foo="maoyl-foo" bar="hello-bar" />
+        <hr>
+        <Child03 foo="maoyl-foo" bar="hello-bar" />
       </div>
     </div>
     
@@ -28,5 +30,6 @@
   <script setup>
   import Child01 from './components/Child01.vue';
   import Child02 from './components/Child02.vue';
+  import Child03 from './components/Child03.vue';
 
   </script>
