@@ -20,8 +20,10 @@
       <div>
         <Child02 foo="maoyl-foo" bar="hello-bar" />
         <hr>
-        <Child03 foo="maoyl-foo" bar="hello-bar" />
+        <Child03 foo="maoyl-foo-interface" bar="hello-interface" />
       </div>
+      <hr>
+        <Child03 foo="maoyl-foo-type" bar="hello-bar-type" />
     </div>
     
   </div>
