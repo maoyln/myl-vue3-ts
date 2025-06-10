@@ -32,6 +32,15 @@
     <div>
       <Child05 />
     </div>
+
+    <hr>
+
+    <h2>复杂的 prop 类型</h2>
+    <div>
+      <Child06 :book="{ title: '这是一个书名称', author: 'maoyl', year: 2022 }" />
+    </div>
+
+    
   </div>
 </template>
 
@@ -41,4 +50,5 @@ import Child02 from "./components/Child02.vue";
 import Child03 from "./components/Child03.vue";
 import Child04 from "./components/Child04.vue";
 import Child05 from "./components/Child05.vue";
+import Child06 from "./components/Child06.vue";
 </script>
