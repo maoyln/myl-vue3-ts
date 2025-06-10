@@ -38,6 +38,12 @@
     <h2>复杂的 prop 类型</h2>
     <div>
       <Child06 :book="{ title: '这是一个书名称', author: 'maoyl', year: 2022 }" />
+
+      <br>
+
+      <h3>PropType</h3>
+      <Child06 :book="{ title: '这是一个书名称', author: 'maoyl', year: 2022 }" />
+
     </div>
 
     
@@ -51,4 +57,5 @@ import Child03 from "./components/Child03.vue";
 import Child04 from "./components/Child04.vue";
 import Child05 from "./components/Child05.vue";
 import Child06 from "./components/Child06.vue";
+import Child07 from "./components/Child07.vue";
 </script>
