@@ -15,6 +15,10 @@ interface Book {
   year: number
 }
 
+import type { PropType } from 'vue'
 
+const props: { book?: Book } | any = defineProps({
+  book: Object as PropType<Book>
+})
 
 </script>
