@@ -237,6 +237,20 @@ export const asyncRoutes: RouteRecordRaw[] = [
           },
         ],
       },
+
+      {
+        path: 'tools',
+        name: 'tools',
+        meta: { title: '工具箱', icon: 'Setting' },
+        children: [
+          {
+            path: 'berthing',
+            name: '泊靠',
+            meta: { title: 'berthing' },
+            component: () => import('@/views/tools/berthing.vue'),
+          },
+        ],
+      },
       {
         path: 'about',
         name: 'About',
