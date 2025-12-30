@@ -249,6 +249,80 @@ export const asyncRoutes: RouteRecordRaw[] = [
             meta: { title: 'berthing' },
             component: () => import('@/views/tools/berthing.vue'),
           },
+          {
+            path: 'berthing01',
+            name: '泊靠01',
+            meta: { title: 'berthing01' },
+            component: () => import('@/views/tools/berthing01.vue'),
+          },
+          {
+            path: 'berthing02',
+            name: '泊靠02',
+            meta: { title: 'berthing02' },
+            component: () => import('@/views/tools/berthing02.vue'),
+          },
+          {
+            path: 'berthing03',
+            name: '泊靠03',
+            meta: { title: 'berthing03' },
+            component: () => import('@/views/tools/berthing03.vue'),
+          },
+          {
+            path: 'berthing04',
+            name: '泊靠04',
+            meta: { title: 'berthing04' },
+            component: () => import('@/views/tools/berthing04.vue'),
+          },
+        ],
+      },
+      {
+        path: 'toolsberthing',
+        name: '工具箱泊靠',
+        meta: { title: '工具箱泊靠' },
+        children: [
+          {
+            path: 'berthing01',
+            name: '泊靠01',
+            meta: { title: 'berthing01' },
+            component: () => import('@/views/toolsberthing/berthing01.vue'),
+          },
+          {
+            path: 'berthing02',
+            name: '泊靠02',
+            meta: { title: 'berthing02' },
+            component: () => import('@/views/toolsberthing/berthing02.vue'),
+          },
+          {
+            path: 'berthing02-refactored',
+            name: '泊靠02-refactored',
+            meta: { title: 'berthing02-refactored' },
+            component: () => import('@/views/toolsberthing/berthing02-refactored.vue'),
+          },
+          {
+            path: 'berthing03-refactored',
+            name: '泊靠03-refactored',
+            meta: { title: 'berthing03-refactored' },
+            component: () => import('@/views/toolsberthing/berthing03-refactored.vue'),
+          },
+          {
+            path: 'berthing04',
+            name: '泊靠04',
+            meta: { title: 'berthing04' },
+            component: () => import('@/views/toolsberthing/berthing04.vue'),
+          },
+        ],
+      },
+      {
+        path: 'tools02',
+        name: '工具箱02',
+        meta: { title: '工具箱02' },
+        children: [
+          {
+            path: '02-refactored',
+            name: '02-refactored',
+            meta: { title: '02-refactored' },
+            component: () => import('@/views/tools02/berthing.vue'),
+          },
         ],
       },
       {
