@@ -338,6 +338,12 @@ export const asyncRoutes: RouteRecordRaw[] = [
         meta: { title: '设置', icon: 'Tools' },
         component: () => import('@/views/Setting.vue'),
       },
+      {
+        path: 'berthing-frame',
+        name: 'BerthingFrame',
+        meta: { title: '泊靠框架', icon: 'Document' },
+        component: () => import('@/views/BerthingFrame.vue'),
+      },
     ],
   },
 ];
