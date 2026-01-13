@@ -242,6 +242,7 @@ export const asyncRoutes: RouteRecordRaw[] = [
         path: 'tools',
         name: 'tools',
         meta: { title: '工具箱', icon: 'Setting' },
+        redirect: '/tools/berthing',
         children: [
           {
             path: 'berthing',

@@ -26,11 +26,11 @@
         zone-id="additional"
         @update:tabs="additionalTabs = $event"
         @tab-change="handleAdditionalTabChange"
-          @drag-start="handleDragStart"
-          @drag-end="handleDragEnd"
-          @tab-add="handleTabAdd"
-          @tab-remove="handleTabRemove"
-          ref="additionalTabZoneRef"
+        @drag-start="handleDragStart"
+        @drag-end="handleDragEnd"
+        @tab-add="handleTabAdd"
+        @tab-remove="handleTabRemove"
+        ref="additionalTabZoneRef"
       />
     </a-layout>
   </div>
@@ -103,32 +103,32 @@ onMounted(() => {
 })
 
 // Tab 切换处理
-const handleMainTabChange = (key: string) => {
-  console.log('主内容区域切换到:', key)
+const handleMainTabChange = (_key: string) => {
+  // 可以在这里添加切换逻辑
 }
 
-const handleAdditionalTabChange = (key: string) => {
-  console.log('附加功能区域切换到:', key)
+const handleAdditionalTabChange = (_key: string) => {
+  // 可以在这里添加切换逻辑
 }
 
 // 拖拽开始
-const handleDragStart = (key: string, zoneId: string) => {
-  console.log('拖拽开始:', key, '区域:', zoneId)
+const handleDragStart = (_key: string, _zoneId: string) => {
+  // 可以在这里添加拖拽开始逻辑
 }
 
 // 拖拽结束
 const handleDragEnd = () => {
-  console.log('拖拽结束')
+  // 可以在这里添加拖拽结束逻辑
 }
 
 // Tab 添加
-const handleTabAdd = (key: string, zoneId: string) => {
-  console.log('Tab 添加到:', zoneId, 'key:', key)
+const handleTabAdd = (_key: string, _zoneId: string) => {
+  // 可以在这里添加tab添加逻辑
 }
 
 // Tab 移除
-const handleTabRemove = (key: string, zoneId: string) => {
-  console.log('Tab 从区域移除:', zoneId, 'key:', key)
+const handleTabRemove = (_key: string, _zoneId: string) => {
+  // 可以在这里添加tab移除逻辑
 }
 </script>
 

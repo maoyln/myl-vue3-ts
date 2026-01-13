@@ -22,12 +22,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-interface Props {
-  tabKey?: string
-}
-
-defineProps<Props>()
-
 const currentDate = computed(() => {
   return new Date().toLocaleDateString('zh-CN', {
     year: 'numeric',

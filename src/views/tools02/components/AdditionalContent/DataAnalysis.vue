@@ -31,11 +31,7 @@
 </template>
 
 <script setup lang="ts">
-interface Props {
-  tabKey?: string
-}
-
-defineProps<Props>()
+// 组件不需要 props
 </script>
 
 <style scoped>
