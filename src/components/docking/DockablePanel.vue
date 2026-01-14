@@ -10,14 +10,16 @@
     @mousedown="handlePanelClick"
   >
     <!-- 标题栏 -->
-    <div 
-      class="panel-header"
-      @mousedown.stop="handleHeaderMouseDown"
-    >
-      <div class="panel-title">
+    <div class="panel-header">
+      <!-- 可拖拽的标题区域 -->
+      <div 
+        class="panel-title"
+        @mousedown.stop="handleHeaderMouseDown"
+      >
         <span class="panel-icon">📋</span>
         {{ panel.title }}
       </div>
+      <!-- 按钮区域（不触发拖拽） -->
       <div class="panel-actions">
         <button 
           v-if="panel.state === 'docked'"
@@ -53,11 +55,21 @@
       </slot>
     </div>
 
-    <!-- 调整大小手柄（仅浮动状态） -->
-    <template v-if="panel.state === 'floating' && panel.resizable !== false">
-      <div class="resize-handle resize-e" @mousedown.stop="handleResizeStart($event, 'e')"></div>
-      <div class="resize-handle resize-s" @mousedown.stop="handleResizeStart($event, 's')"></div>
-      <div class="resize-handle resize-se" @mousedown.stop="handleResizeStart($event, 'se')"></div>
+    <!-- 调整大小手柄 -->
+    <template v-if="panel.resizable !== false">
+      <!-- 浮动状态：右、下、右下 -->
+      <template v-if="panel.state === 'floating'">
+        <div class="resize-handle resize-e" @mousedown.stop="handleResizeStart($event, 'e')"></div>
+        <div class="resize-handle resize-s" @mousedown.stop="handleResizeStart($event, 's')"></div>
+        <div class="resize-handle resize-se" @mousedown.stop="handleResizeStart($event, 'se')"></div>
+      </template>
+      <!-- 停靠状态：根据位置显示对应的调整手柄 -->
+      <template v-else-if="panel.state === 'docked'">
+        <div v-if="panel.position === 'left'" class="resize-handle resize-e" @mousedown.stop="handleResizeStart($event, 'e')"></div>
+        <div v-if="panel.position === 'right'" class="resize-handle resize-w" @mousedown.stop="handleResizeStart($event, 'w')"></div>
+        <div v-if="panel.position === 'top'" class="resize-handle resize-s" @mousedown.stop="handleResizeStart($event, 's')"></div>
+        <div v-if="panel.position === 'bottom'" class="resize-handle resize-n" @mousedown.stop="handleResizeStart($event, 'n')"></div>
+      </template>
     </template>
   </div>
 </template>
@@ -80,17 +92,15 @@ const panelStyle = computed(() => {
   const p = props.panel;
   
   if (p.state === 'docked') {
-    // 停靠状态：使用固定定位
+    // 停靠状态：使用相对定位，宽高由flex布局控制
     return {
-      position: 'fixed',
-      left: `${p.x}px`,
-      top: `${p.y}px`,
       width: `${p.width}px`,
       height: `${p.height}px`,
       zIndex: p.zIndex,
+      flex: '0 0 auto',
     };
   } else {
-    // 浮动或拖拽状态
+    // 浮动或拖拽状态：使用固定定位
     return {
       position: 'fixed',
       left: `${p.x}px`,
@@ -171,11 +181,18 @@ function handleResizeMove(e: MouseEvent) {
   let newWidth = resizeStartWidth.value;
   let newHeight = resizeStartHeight.value;
 
+  // 根据方向调整尺寸
   if (resizeDirection.value.includes('e')) {
     newWidth = resizeStartWidth.value + deltaX;
   }
+  if (resizeDirection.value.includes('w')) {
+    newWidth = resizeStartWidth.value - deltaX;
+  }
   if (resizeDirection.value.includes('s')) {
     newHeight = resizeStartHeight.value + deltaY;
+  }
+  if (resizeDirection.value.includes('n')) {
+    newHeight = resizeStartHeight.value - deltaY;
   }
 
   manager.resizePanel(props.panel.id, newWidth, newHeight);
@@ -192,25 +209,33 @@ function handleResizeEnd() {
 .dockable-panel {
   background-color: #2d2d2d;
   border: 1px solid #3e3e3e;
-  border-radius: 6px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   transition: box-shadow 0.2s;
 }
 
-.dockable-panel:hover {
+/* 浮动面板样式 */
+.panel-floating {
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.panel-floating:hover {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
+/* 拖拽状态 */
 .panel-dragging {
   opacity: 0.8;
   cursor: grabbing !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
 }
 
+/* 停靠面板样式 */
 .panel-docked {
   border-radius: 0;
+  box-shadow: none;
 }
 
 /* 标题栏 */
@@ -221,14 +246,11 @@ function handleResizeEnd() {
   padding: 8px 12px;
   background-color: #3e3e3e;
   border-bottom: 1px solid #555;
-  cursor: grab;
   user-select: none;
+  gap: 8px;
 }
 
-.panel-header:active {
-  cursor: grabbing;
-}
-
+/* 标题区域（可拖拽） */
 .panel-title {
   display: flex;
   align-items: center;
@@ -236,15 +258,32 @@ function handleResizeEnd() {
   color: #e0e0e0;
   font-size: 13px;
   font-weight: 500;
+  flex: 1;
+  cursor: grab;
+  padding: 4px;
+  margin: -4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.panel-title:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.panel-title:active {
+  cursor: grabbing;
+  background-color: rgba(255, 255, 255, 0.08);
 }
 
 .panel-icon {
   font-size: 14px;
 }
 
+/* 按钮区域（不可拖拽） */
 .panel-actions {
   display: flex;
   gap: 4px;
+  flex-shrink: 0;
 }
 
 .panel-action-btn {
@@ -260,11 +299,18 @@ function handleResizeEnd() {
   align-items: center;
   justify-content: center;
   transition: background-color 0.2s, color 0.2s;
+  position: relative;
+  z-index: 1;
 }
 
 .panel-action-btn:hover {
   background-color: #555;
   color: #fff;
+}
+
+.panel-action-btn:active {
+  background-color: #666;
+  transform: scale(0.95);
 }
 
 /* 内容区 */
@@ -292,33 +338,55 @@ function handleResizeEnd() {
   position: absolute;
   background-color: transparent;
   z-index: 10;
+  transition: background-color 0.2s;
 }
 
+.resize-handle:hover {
+  background-color: rgba(66, 133, 244, 0.4);
+}
+
+/* 东（右） */
 .resize-e {
   right: 0;
   top: 0;
-  width: 4px;
+  width: 6px;
   height: 100%;
   cursor: ew-resize;
 }
 
+/* 西（左） */
+.resize-w {
+  left: 0;
+  top: 0;
+  width: 6px;
+  height: 100%;
+  cursor: ew-resize;
+}
+
+/* 南（下） */
 .resize-s {
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 4px;
+  height: 6px;
   cursor: ns-resize;
 }
 
+/* 北（上） */
+.resize-n {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 6px;
+  cursor: ns-resize;
+}
+
+/* 东南（右下角） */
 .resize-se {
   right: 0;
   bottom: 0;
   width: 12px;
   height: 12px;
   cursor: nwse-resize;
-}
-
-.resize-handle:hover {
-  background-color: rgba(66, 133, 244, 0.3);
 }
 </style>

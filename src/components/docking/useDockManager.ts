@@ -71,7 +71,7 @@ export function useDockManager(config?: DockManagerConfig) {
     // 如果有默认位置，则自动停靠
     if (config.defaultPosition && config.defaultPosition !== 'float') {
       panel.state = 'docked';
-      updateDockedPanelPosition(panel);
+      updateDockedPanelSize(panel);
     }
 
     panels.value.set(config.id, panel);
@@ -220,7 +220,7 @@ export function useDockManager(config?: DockManagerConfig) {
         }
       }
 
-      updateDockedPanelPosition(panel);
+      updateDockedPanelSize(panel);
     } else {
       // 保持浮动状态
       panel.state = 'floating';
@@ -268,6 +268,9 @@ export function useDockManager(config?: DockManagerConfig) {
     mouseY: number,
     containerR: DOMRect
   ): SnapResult {
+    const defaultWidth = 250; // 默认停靠宽度
+    const defaultHeight = 200; // 默认停靠高度
+
     // 左边缘
     if (mouseX - containerR.left < hotZoneSize) {
       return {
@@ -276,7 +279,7 @@ export function useDockManager(config?: DockManagerConfig) {
         targetRect: new DOMRect(
           containerR.left,
           containerR.top,
-          containerR.width * 0.3,
+          defaultWidth,
           containerR.height
         ),
       };
@@ -288,9 +291,9 @@ export function useDockManager(config?: DockManagerConfig) {
         shouldSnap: true,
         position: 'right',
         targetRect: new DOMRect(
-          containerR.right - containerR.width * 0.3,
+          containerR.right - defaultWidth,
           containerR.top,
-          containerR.width * 0.3,
+          defaultWidth,
           containerR.height
         ),
       };
@@ -305,7 +308,7 @@ export function useDockManager(config?: DockManagerConfig) {
           containerR.left,
           containerR.top,
           containerR.width,
-          containerR.height * 0.3
+          defaultHeight
         ),
       };
     }
@@ -317,9 +320,9 @@ export function useDockManager(config?: DockManagerConfig) {
         position: 'bottom',
         targetRect: new DOMRect(
           containerR.left,
-          containerR.bottom - containerR.height * 0.3,
+          containerR.bottom - defaultHeight,
           containerR.width,
-          containerR.height * 0.3
+          defaultHeight
         ),
       };
     }
@@ -328,7 +331,8 @@ export function useDockManager(config?: DockManagerConfig) {
   }
 
   /**
-   * 检测面板吸附
+   * 检测面板吸附（已停靠面板周围）
+   * 注意：面板可以吸附在已停靠面板的同一侧，而不是在面板上方
    */
   function detectPanelSnap(
     draggedPanel: PanelInstance,
@@ -344,81 +348,77 @@ export function useDockManager(config?: DockManagerConfig) {
 
       const rect = panelElement.getBoundingClientRect();
 
-      // 检测四个边缘
-      // 左边
-      if (
-        Math.abs(mouseX - rect.left) < snapThreshold &&
-        mouseY > rect.top - snapThreshold &&
-        mouseY < rect.bottom + snapThreshold
-      ) {
-        return {
-          shouldSnap: true,
-          position: 'left',
-          targetPanelId: id,
-          targetRect: new DOMRect(
-            rect.left - 200,
-            rect.top,
-            200,
-            rect.height
-          ),
-        };
-      }
-
-      // 右边
-      if (
-        Math.abs(mouseX - rect.right) < snapThreshold &&
-        mouseY > rect.top - snapThreshold &&
-        mouseY < rect.bottom + snapThreshold
-      ) {
-        return {
-          shouldSnap: true,
-          position: 'right',
-          targetPanelId: id,
-          targetRect: new DOMRect(
-            rect.right,
-            rect.top,
-            200,
-            rect.height
-          ),
-        };
-      }
-
-      // 上边
-      if (
-        Math.abs(mouseY - rect.top) < snapThreshold &&
-        mouseX > rect.left - snapThreshold &&
-        mouseX < rect.right + snapThreshold
-      ) {
-        return {
-          shouldSnap: true,
-          position: 'top',
-          targetPanelId: id,
-          targetRect: new DOMRect(
-            rect.left,
-            rect.top - 150,
-            rect.width,
-            150
-          ),
-        };
-      }
-
-      // 下边
-      if (
-        Math.abs(mouseY - rect.bottom) < snapThreshold &&
-        mouseX > rect.left - snapThreshold &&
-        mouseX < rect.right + snapThreshold
-      ) {
-        return {
-          shouldSnap: true,
-          position: 'bottom',
-          targetPanelId: id,
-          targetRect: new DOMRect(
-            rect.left,
-            rect.bottom,
-            rect.width,
-            150
-          ),
-        };
+      // 根据面板的停靠位置，检测是否可以吸附在同一侧
+      if (panel.position === 'left' || panel.position === 'right') {
+        // 左右停靠面板：检测上下是否可以吸附
+        if (
+          mouseX > rect.left - snapThreshold &&
+          mouseX < rect.right + snapThreshold
+        ) {
+          // 检测是否在面板上方
+          if (Math.abs(mouseY - rect.top) < snapThreshold) {
+            return {
+              shouldSnap: true,
+              position: panel.position, // 吸附到同一侧
+              targetPanelId: id,
+              targetRect: new DOMRect(
+                rect.left,
+                rect.top - 150,
+                rect.width,
+                150
+              ),
+            };
+          }
+          // 检测是否在面板下方
+          if (Math.abs(mouseY - rect.bottom) < snapThreshold) {
+            return {
+              shouldSnap: true,
+              position: panel.position,
+              targetPanelId: id,
+              targetRect: new DOMRect(
+                rect.left,
+                rect.bottom,
+                rect.width,
+                150
+              ),
+            };
+          }
+        }
+      } else if (panel.position === 'top' || panel.position === 'bottom') {
+        // 上下停靠面板：检测左右是否可以吸附
+        if (
+          mouseY > rect.top - snapThreshold &&
+          mouseY < rect.bottom + snapThreshold
+        ) {
+          // 检测是否在面板左侧
+          if (Math.abs(mouseX - rect.left) < snapThreshold) {
+            return {
+              shouldSnap: true,
+              position: panel.position,
+              targetPanelId: id,
+              targetRect: new DOMRect(
+                rect.left - 200,
+                rect.top,
+                200,
+                rect.height
+              ),
+            };
+          }
+          // 检测是否在面板右侧
+          if (Math.abs(mouseX - rect.right) < snapThreshold) {
+            return {
+              shouldSnap: true,
+              position: panel.position,
+              targetPanelId: id,
+              targetRect: new DOMRect(
+                rect.right,
+                rect.top,
+                200,
+                rect.height
+              ),
+            };
+          }
+        }
       }
     }
 
@@ -426,37 +426,30 @@ export function useDockManager(config?: DockManagerConfig) {
   }
 
   /**
-   * 更新停靠面板位置
+   * 更新停靠面板尺寸
+   * 注意：停靠面板使用 flex 布局，不需要设置 x, y 坐标
    */
-  function updateDockedPanelPosition(panel: PanelInstance) {
+  function updateDockedPanelSize(panel: PanelInstance) {
     if (!containerRect.value) return;
 
     const containerR = containerRect.value;
 
     switch (panel.position) {
       case 'left':
-        panel.x = containerR.left;
-        panel.y = containerR.top;
-        panel.width = Math.min(panel.width, containerR.width * 0.4);
-        panel.height = containerR.height;
-        break;
       case 'right':
-        panel.width = Math.min(panel.width, containerR.width * 0.4);
-        panel.x = containerR.right - panel.width;
-        panel.y = containerR.top;
-        panel.height = containerR.height;
+        // 左右停靠：限制宽度，高度自动填充
+        panel.width = Math.max(
+          Math.min(panel.width, containerR.width * 0.4),
+          panel.minWidth || minPanelWidth
+        );
         break;
       case 'top':
-        panel.x = containerR.left;
-        panel.y = containerR.top;
-        panel.width = containerR.width;
-        panel.height = Math.min(panel.height, containerR.height * 0.4);
-        break;
       case 'bottom':
-        panel.x = containerR.left;
-        panel.height = Math.min(panel.height, containerR.height * 0.4);
-        panel.y = containerR.bottom - panel.height;
-        panel.width = containerR.width;
+        // 上下停靠：限制高度，宽度自动填充
+        panel.height = Math.max(
+          Math.min(panel.height, containerR.height * 0.4),
+          panel.minHeight || minPanelHeight
+        );
         break;
     }
   }

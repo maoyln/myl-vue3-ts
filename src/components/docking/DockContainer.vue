@@ -5,10 +5,59 @@
     @mouseup="handleMouseUp"
     @mousemove="handleMouseMove"
   >
-    <!-- 主内容区 -->
-    <div class="dock-content">
-      <slot></slot>
+    <!-- Flex 布局容器 -->
+    <div class="dock-layout">
+      <!-- 顶部停靠区 -->
+      <div v-if="topPanels.length > 0" class="dock-area dock-top">
+        <DockablePanel
+          v-for="panel in topPanels"
+          :key="panel.id"
+          :panel="panel"
+        />
+      </div>
+
+      <!-- 中间区域（左-中-右） -->
+      <div class="dock-middle">
+        <!-- 左侧停靠区 -->
+        <div v-if="leftPanels.length > 0" class="dock-area dock-left">
+          <DockablePanel
+            v-for="panel in leftPanels"
+            :key="panel.id"
+            :panel="panel"
+          />
+        </div>
+
+        <!-- 主内容区 -->
+        <div class="dock-content">
+          <slot></slot>
+        </div>
+
+        <!-- 右侧停靠区 -->
+        <div v-if="rightPanels.length > 0" class="dock-area dock-right">
+          <DockablePanel
+            v-for="panel in rightPanels"
+            :key="panel.id"
+            :panel="panel"
+          />
+        </div>
+      </div>
+
+      <!-- 底部停靠区 -->
+      <div v-if="bottomPanels.length > 0" class="dock-area dock-bottom">
+        <DockablePanel
+          v-for="panel in bottomPanels"
+          :key="panel.id"
+          :panel="panel"
+        />
+      </div>
     </div>
+
+    <!-- 浮动面板（fixed定位） -->
+    <DockablePanel
+      v-for="panel in floatingPanels"
+      :key="panel.id"
+      :panel="panel"
+    />
 
     <!-- 热区指示器（拖拽时显示） -->
     <div 
@@ -16,13 +65,6 @@
       class="dock-zone-indicator"
       :style="getZoneIndicatorStyle(hoveredZone)"
     ></div>
-
-    <!-- 渲染所有面板 -->
-    <DockablePanel
-      v-for="panel in panelList"
-      :key="panel.id"
-      :panel="panel"
-    />
   </div>
 </template>
 
@@ -44,6 +86,27 @@ const { panelList, hoveredZone, dragInfo } = manager;
 
 // 容器引用
 const containerRef = ref<HTMLElement | null>(null);
+
+// 按位置分组面板
+const topPanels = computed(() => 
+  panelList.value.filter(p => p.state === 'docked' && p.position === 'top')
+);
+
+const bottomPanels = computed(() => 
+  panelList.value.filter(p => p.state === 'docked' && p.position === 'bottom')
+);
+
+const leftPanels = computed(() => 
+  panelList.value.filter(p => p.state === 'docked' && p.position === 'left')
+);
+
+const rightPanels = computed(() => 
+  panelList.value.filter(p => p.state === 'docked' && p.position === 'right')
+);
+
+const floatingPanels = computed(() => 
+  panelList.value.filter(p => p.state === 'floating' || p.state === 'dragging')
+);
 
 // 组件挂载
 onMounted(() => {
@@ -103,13 +166,53 @@ defineExpose({
   background-color: #1e1e1e;
 }
 
-.dock-content {
+/* Flex 布局容器 */
+.dock-layout {
+  display: flex;
+  flex-direction: column;
   width: 100%;
   height: 100%;
-  position: relative;
-  z-index: 1;
 }
 
+/* 中间区域（水平布局） */
+.dock-middle {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* 停靠区域 */
+.dock-area {
+  display: flex;
+  background-color: #2d2d2d;
+  border: 1px solid #3e3e3e;
+  overflow: hidden;
+}
+
+.dock-top,
+.dock-bottom {
+  flex-direction: row;
+  min-height: 150px;
+  max-height: 400px;
+}
+
+.dock-left,
+.dock-right {
+  flex-direction: column;
+  min-width: 200px;
+  max-width: 400px;
+}
+
+/* 主内容区 */
+.dock-content {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* 热区指示器 */
 .dock-zone-indicator {
   position: fixed;
   background-color: rgba(66, 133, 244, 0.3);
