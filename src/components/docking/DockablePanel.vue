@@ -93,16 +93,28 @@ const panelStyle = computed(() => {
   
   if (p.state === 'docked') {
     // 停靠状态：使用相对定位，宽高由flex布局控制
-    return {
-      width: `${p.width}px`,
-      height: `${p.height}px`,
+    // 根据位置决定使用哪个维度的固定尺寸
+    const style: any = {
       zIndex: p.zIndex,
       flex: '0 0 auto',
     };
+
+    // 左右停靠：固定宽度，高度自适应（由flex容器平分）
+    if (p.position === 'left' || p.position === 'right') {
+      style.width = `${p.width}px`;
+      style.height = `${p.height}px`; // 由布局管理器计算的高度
+    }
+    // 上下停靠：固定高度，宽度自适应（由flex容器平分）
+    else if (p.position === 'top' || p.position === 'bottom') {
+      style.width = `${p.width}px`; // 由布局管理器计算的宽度
+      style.height = `${p.height}px`;
+    }
+
+    return style;
   } else {
     // 浮动或拖拽状态：使用固定定位
     return {
-      position: 'fixed',
+      position: 'fixed' as const,
       left: `${p.x}px`,
       top: `${p.y}px`,
       width: `${p.width}px`,
@@ -126,6 +138,18 @@ function handleHeaderMouseDown(e: MouseEvent) {
 // 分离面板
 function handleDetach() {
   const panel = props.panel;
+  const oldPosition = panel.position;
+
+  // 获取面板当前的实际位置和尺寸（用于转换到浮动状态）
+  const panelElement = document.querySelector(`[data-panel-id="${panel.id}"]`);
+  if (panelElement) {
+    const rect = panelElement.getBoundingClientRect();
+    panel.x = rect.left;
+    panel.y = rect.top;
+    panel.width = rect.width;
+    panel.height = rect.height;
+  }
+
   panel.state = 'floating';
   panel.position = 'float';
   
@@ -138,11 +162,11 @@ function handleDetach() {
     panel.dockedWith = undefined;
   }
   
-  // 居中显示
-  if (manager.containerRect.value) {
-    const rect = manager.containerRect.value;
-    panel.x = rect.left + (rect.width - panel.width) / 2;
-    panel.y = rect.top + (rect.height - panel.height) / 2;
+  // 更新原位置的其他停靠面板布局
+  if (oldPosition !== 'float' && oldPosition !== 'center') {
+    setTimeout(() => {
+      manager.updateDockedPanelsByPosition(oldPosition);
+    }, 0);
   }
 }
 
@@ -202,6 +226,15 @@ function handleResizeEnd() {
   resizing.value = false;
   document.removeEventListener('mousemove', handleResizeMove);
   document.removeEventListener('mouseup', handleResizeEnd);
+
+  // 如果是停靠面板，调整大小后需要更新布局
+  const panel = props.panel;
+  if (panel.state === 'docked' && panel.position !== 'float' && panel.position !== 'center') {
+    // 对于左右停靠，用户调整的是宽度，不影响其他面板
+    // 对于上下停靠，用户调整的是高度，不影响其他面板
+    // 但我们需要确保尺寸在合理范围内
+    manager.updateDockedPanelsByPosition(panel.position);
+  }
 }
 </script>
 

@@ -344,6 +344,18 @@ export const asyncRoutes: RouteRecordRaw[] = [
         meta: { title: '泊靠框架', icon: 'Document' },
         component: () => import('@/views/BerthingFrame.vue'),
       },
+      {
+        path: 'docking-demo',
+        name: 'DockingDemo',
+        meta: { title: 'PS停泊吸附演示', icon: 'Grid' },
+        component: () => import('@/views/DockingDemo.vue'),
+      },
+      {
+        path: 'docking-group-demo',
+        name: 'DockingGroupDemo',
+        meta: { title: '面板组Tabs演示', icon: 'Folder' },
+        component: () => import('@/views/DockingGroupDemo.vue'),
+      },
     ],
   },
 ];
