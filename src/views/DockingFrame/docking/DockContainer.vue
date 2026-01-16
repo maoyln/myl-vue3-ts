@@ -1,6 +1,6 @@
 <template>
-  <div 
-    ref="containerRef" 
+  <div
+    ref="containerRef"
     class="dock-container"
     @mouseup="handleMouseUp"
     @mousemove="handleMouseMove"
@@ -8,14 +8,9 @@
     <!-- Flex 布局容器 -->
     <div class="dock-layout">
       <!-- 顶部停靠区 -->
-      <div v-if="topPanels.length > 0 || topPanelGroups.length > 0" class="dock-area dock-top">
-        <DockablePanel
-          v-for="panel in topPanels"
-          :key="panel.id"
-          :panel="panel"
-        />
+      <div v-if="topGroups.length > 0" class="dock-area dock-top">
         <DockablePanelGroup
-          v-for="group in topPanelGroups"
+          v-for="group in topGroups"
           :key="group.id"
           :group="group"
         >
@@ -28,14 +23,9 @@
       <!-- 中间区域（左-中-右） -->
       <div class="dock-middle">
         <!-- 左侧停靠区 -->
-        <div v-if="leftPanels.length > 0 || leftPanelGroups.length > 0" class="dock-area dock-left">
-          <DockablePanel
-            v-for="panel in leftPanels"
-            :key="panel.id"
-            :panel="panel"
-          />
+        <div v-if="leftGroups.length > 0" class="dock-area dock-left">
           <DockablePanelGroup
-            v-for="group in leftPanelGroups"
+            v-for="group in leftGroups"
             :key="group.id"
             :group="group"
           >
@@ -51,14 +41,9 @@
         </div>
 
         <!-- 右侧停靠区 -->
-        <div v-if="rightPanels.length > 0 || rightPanelGroups.length > 0" class="dock-area dock-right">
-          <DockablePanel
-            v-for="panel in rightPanels"
-            :key="panel.id"
-            :panel="panel"
-          />
+        <div v-if="rightGroups.length > 0" class="dock-area dock-right">
           <DockablePanelGroup
-            v-for="group in rightPanelGroups"
+            v-for="group in rightGroups"
             :key="group.id"
             :group="group"
           >
@@ -70,14 +55,9 @@
       </div>
 
       <!-- 底部停靠区 -->
-      <div v-if="bottomPanels.length > 0 || bottomPanelGroups.length > 0" class="dock-area dock-bottom">
-        <DockablePanel
-          v-for="panel in bottomPanels"
-          :key="panel.id"
-          :panel="panel"
-        />
+      <div v-if="bottomGroups.length > 0" class="dock-area dock-bottom">
         <DockablePanelGroup
-          v-for="group in bottomPanelGroups"
+          v-for="group in bottomGroups"
           :key="group.id"
           :group="group"
         >
@@ -88,40 +68,30 @@
       </div>
     </div>
 
-    <!-- 浮动面板（fixed定位） -->
-    <DockablePanel
-      v-for="panel in floatingPanels"
-      :key="panel.id"
-      :panel="panel"
-    />
-
-    <!-- 浮动面板组（fixed定位） -->
+    <!-- 浮动面板组 -->
     <DockablePanelGroup
-      v-for="group in floatingPanelGroups"
+      v-for="group in floatingGroups"
       :key="group.id"
       :group="group"
     >
       <template #default="{ activeTab }">
-        <slot name="panel-group-content" :group="group" :activeTab="activeTab">
-          <!-- 默认内容 -->
-        </slot>
+        <slot name="panel-group-content" :group="group" :activeTab="activeTab" />
       </template>
     </DockablePanelGroup>
 
-    <!-- 热区指示器（拖拽时显示） -->
-    <div 
-      v-if="hoveredZone" 
+    <!-- 热区指示器 -->
+    <div
+      v-if="hoveredZone"
       class="dock-zone-indicator"
       :style="getZoneIndicatorStyle(hoveredZone)"
     ></div>
 
-    <!-- 标签拖拽预览 - 完整面板预览 -->
-    <div 
-      v-if="tabDragInfo && draggedTab && draggedGroup" 
+    <!-- 标签拖拽预览 -->
+    <div
+      v-if="tabDragInfo && draggedTab && draggedGroup"
       class="panel-drag-preview"
       :style="getPanelPreviewStyle()"
     >
-      <!-- 标签栏 -->
       <div class="preview-tabs-header">
         <div class="preview-tabs-container">
           <div class="preview-tab active">
@@ -130,8 +100,6 @@
           </div>
         </div>
       </div>
-      
-      <!-- 内容区 -->
       <div class="preview-content">
         <slot name="panel-group-content" :group="draggedGroup" :activeTab="draggedTab">
           <div class="preview-placeholder">
@@ -147,7 +115,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useDockManager } from './useDockManager';
-import DockablePanel from './DockablePanel.vue';
 import DockablePanelGroup from './DockablePanelGroup.vue';
 import type { DockManagerConfig } from './types';
 
@@ -157,73 +124,46 @@ interface Props {
 
 const props = defineProps<Props>();
 
-// 使用停靠管理器
 const manager = useDockManager(props.config);
-const { panelList, panelGroupList, hoveredZone, dragInfo, tabDragInfo } = manager;
+const { panelGroupList, hoveredZone, dragInfo, tabDragInfo } = manager;
 
-// 容器引用
 const containerRef = ref<HTMLElement | null>(null);
 
-// 按位置分组面板
-const topPanels = computed(() => 
-  panelList.value.filter(p => p.state === 'docked' && p.position === 'top')
-);
-
-const bottomPanels = computed(() => 
-  panelList.value.filter(p => p.state === 'docked' && p.position === 'bottom')
-);
-
-const leftPanels = computed(() => 
-  panelList.value.filter(p => p.state === 'docked' && p.position === 'left')
-);
-
-const rightPanels = computed(() => 
-  panelList.value.filter(p => p.state === 'docked' && p.position === 'right')
-);
-
-const floatingPanels = computed(() => 
-  panelList.value.filter(p => p.state === 'floating' || p.state === 'dragging')
-);
-
-// 按位置分组面板组
-const topPanelGroups = computed(() => 
+// 按位置分组
+const topGroups = computed(() =>
   panelGroupList.value.filter(g => g.state === 'docked' && g.position === 'top')
 );
 
-const bottomPanelGroups = computed(() => 
+const bottomGroups = computed(() =>
   panelGroupList.value.filter(g => g.state === 'docked' && g.position === 'bottom')
 );
 
-const leftPanelGroups = computed(() => 
+const leftGroups = computed(() =>
   panelGroupList.value.filter(g => g.state === 'docked' && g.position === 'left')
 );
 
-const rightPanelGroups = computed(() => 
+const rightGroups = computed(() =>
   panelGroupList.value.filter(g => g.state === 'docked' && g.position === 'right')
 );
 
-const floatingPanelGroups = computed(() => 
+const floatingGroups = computed(() =>
   panelGroupList.value.filter(g => g.state === 'floating' || g.state === 'dragging')
 );
 
 // 获取被拖拽的标签
 const draggedTab = computed(() => {
   if (!tabDragInfo.value) return null;
-  
-  const sourceGroup = manager.getPanelGroup?.(tabDragInfo.value.groupId);
+  const sourceGroup = manager.getPanelGroup(tabDragInfo.value.groupId);
   if (!sourceGroup) return null;
-  
   return sourceGroup.tabs.find(t => t.id === tabDragInfo.value?.tabId);
 });
 
-// 获取被拖拽标签所在的面板组
+// 被拖拽的面板组
 const draggedGroup = computed(() => {
   if (!tabDragInfo.value) return null;
-  
-  return manager.getPanelGroup?.(tabDragInfo.value.groupId)
+  return manager.getPanelGroup(tabDragInfo.value.groupId);
 });
 
-// 组件挂载
 onMounted(() => {
   if (containerRef.value) {
     manager.registerContainer(containerRef.value);
@@ -231,43 +171,36 @@ onMounted(() => {
   window.addEventListener('resize', handleResize);
 });
 
-// 组件卸载
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
 });
 
-// 窗口大小改变
 function handleResize() {
   manager.updateContainerRect();
-  
-  // 更新所有停靠面板的布局
-  const positions: Array<'left' | 'right' | 'top' | 'bottom'> = ['left', 'right', 'top', 'bottom'];
-  positions.forEach(pos => {
-    manager.updateDockedPanelsByPosition(pos);
+  ['left', 'right', 'top', 'bottom'].forEach(pos => {
+    manager.updateDockedLayout(pos as any);
   });
 }
 
-// 全局鼠标移动
 function handleMouseMove(e: MouseEvent) {
   if (dragInfo.value) {
     manager.onDrag(e.clientX, e.clientY);
   }
   if (tabDragInfo.value) {
-    manager.onDragTab?.(e.clientX, e.clientY);
+    manager.onDragTab(e.clientX, e.clientY);
   }
 }
 
-// 全局鼠标释放
 function handleMouseUp() {
   if (dragInfo.value) {
     manager.endDrag();
   }
   if (tabDragInfo.value) {
-    manager.endDragTab?.();
+    manager.endDragTab();
   }
 }
 
-// 获取热区指示器样式
+// 热区指示器
 function getZoneIndicatorStyle(zone: any) {
   const rect = zone.rect;
   return {
@@ -278,14 +211,11 @@ function getZoneIndicatorStyle(zone: any) {
   };
 }
 
-// 获取面板拖拽预览样式
+// 面板拖拽预览样式
 function getPanelPreviewStyle() {
   if (!tabDragInfo.value || !draggedGroup.value) return {};
-  
-  // 使用面板组的实际尺寸
   const width = draggedGroup.value.width || 280;
   const height = draggedGroup.value.height || 300;
-  
   return {
     left: `${tabDragInfo.value.currentX - 80}px`,
     top: `${tabDragInfo.value.currentY - 20}px`,
@@ -309,7 +239,6 @@ defineExpose({
   background-color: #1e1e1e;
 }
 
-/* Flex 布局容器 */
 .dock-layout {
   display: flex;
   flex-direction: column;
@@ -317,14 +246,12 @@ defineExpose({
   height: 100%;
 }
 
-/* 中间区域（水平布局） */
 .dock-middle {
   display: flex;
   flex: 1;
   min-height: 0;
 }
 
-/* 停靠区域 */
 .dock-area {
   display: flex;
   background-color: #2d2d2d;
@@ -335,16 +262,13 @@ defineExpose({
 .dock-top,
 .dock-bottom {
   flex-direction: row;
-  /* 移除固定的min/max限制，由面板自身的尺寸控制 */
 }
 
 .dock-left,
 .dock-right {
   flex-direction: column;
-  /* 移除固定的min/max限制，由面板自身的尺寸控制 */
 }
 
-/* 主内容区 */
 .dock-content {
   flex: 1;
   position: relative;
@@ -353,7 +277,6 @@ defineExpose({
   min-height: 0;
 }
 
-/* 热区指示器 */
 .dock-zone-indicator {
   position: fixed;
   background-color: rgba(66, 133, 244, 0.3);
@@ -364,7 +287,6 @@ defineExpose({
   transition: all 0.15s ease-out;
 }
 
-/* 面板拖拽预览 */
 .panel-drag-preview {
   position: fixed;
   display: flex;
@@ -379,7 +301,6 @@ defineExpose({
   overflow: hidden;
 }
 
-/* 预览标签栏 */
 .preview-tabs-header {
   display: flex;
   justify-content: space-between;
@@ -420,7 +341,6 @@ defineExpose({
   white-space: nowrap;
 }
 
-/* 预览内容区 */
 .preview-content {
   flex: 1;
   overflow: hidden;

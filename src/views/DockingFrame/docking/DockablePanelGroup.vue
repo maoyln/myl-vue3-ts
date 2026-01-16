@@ -12,8 +12,7 @@
   >
     <!-- 标签栏 -->
     <div class="panel-tabs-header">
-      <!-- 标签页列表 -->
-      <div 
+      <div
         ref="tabsContainerRef"
         class="panel-tabs-container"
         :class="{ 'has-hover-zone': showHoverZone }"
@@ -24,18 +23,17 @@
           :key="tab.id"
           :data-tab-id="tab.id"
           class="panel-tab"
-          :class="{ 
+          :class="{
             'is-active': tab.id === group.activeTabId,
             'is-hot-zone': isTabHotZone(index)
           }"
           @mousedown.stop="handleTabMouseDown($event, tab)"
         >
-          <!-- 插入位置指示器 -->
-          <div 
-            v-if="showInsertIndicator(index)" 
+          <div
+            v-if="showInsertIndicator(index)"
             class="insert-indicator"
           ></div>
-          
+
           <span v-if="tab.icon" class="tab-icon">{{ tab.icon }}</span>
           <span class="tab-title">{{ tab.title }}</span>
           <button
@@ -47,10 +45,9 @@
             ✕
           </button>
         </div>
-        
-        <!-- 末尾插入位置指示器 -->
-        <div 
-          v-if="showInsertIndicator(group.tabs.length)" 
+
+        <div
+          v-if="showInsertIndicator(group.tabs.length)"
           class="insert-indicator insert-indicator-end"
         ></div>
       </div>
@@ -78,29 +75,22 @@
 
     <!-- 内容区 -->
     <div class="panel-content">
-      <slot 
-        :group="group" 
-        :activeTab="activeTab"
-      >
+      <slot :group="group" :activeTab="activeTab">
         <div class="panel-placeholder">
           <p><strong>面板组:</strong> {{ group.id }}</p>
           <p><strong>标签数:</strong> {{ group.tabs.length }}</p>
           <p><strong>当前标签:</strong> {{ activeTab?.title }}</p>
-          <p><strong>状态:</strong> {{ group.state }}</p>
-          <p><strong>位置:</strong> {{ group.position }}</p>
         </div>
       </slot>
     </div>
 
     <!-- 调整大小手柄 -->
     <template v-if="group.resizable !== false">
-      <!-- 浮动状态：右、下、右下 -->
       <template v-if="group.state === 'floating'">
         <div class="resize-handle resize-e" @mousedown.stop="handleResizeStart($event, 'e')"></div>
         <div class="resize-handle resize-s" @mousedown.stop="handleResizeStart($event, 's')"></div>
         <div class="resize-handle resize-se" @mousedown.stop="handleResizeStart($event, 'se')"></div>
       </template>
-      <!-- 停靠状态：根据位置显示对应的调整手柄 -->
       <template v-else-if="group.state === 'docked'">
         <div v-if="group.position === 'left'" class="resize-handle resize-e" @mousedown.stop="handleResizeStart($event, 'e')"></div>
         <div v-if="group.position === 'right'" class="resize-handle resize-w" @mousedown.stop="handleResizeStart($event, 'w')"></div>
@@ -110,8 +100,8 @@
     </template>
 
     <!-- 合并预览指示器 -->
-    <div 
-      v-if="showMergeIndicator" 
+    <div
+      v-if="showMergeIndicator"
       class="merge-indicator"
     >
       <span class="merge-indicator-text">拖到这里合并标签页</span>
@@ -132,146 +122,67 @@ const props = defineProps<Props>();
 
 const manager = injectDockManager();
 
-// 状态
 const isDraggingTab = ref(false);
 const tabsContainerRef = ref<HTMLElement | null>(null);
 const dragStartPos = ref({ x: 0, y: 0 });
-const dragThreshold = 5; // 拖拽阈值（像素）
+const dragThreshold = 5;
 const hasDragged = ref(false);
 
-// 合并指示器状态
 const showMergeIndicator = computed(() => {
   const tabDragInfo = manager.tabDragInfo?.value;
   if (!tabDragInfo) return false;
-  
-  // 只有悬停在当前面板组时才可能显示
   if (manager.hoveredGroup?.value !== props.group.id) return false;
-  
-  // 如果是在同一个面板组内拖动（调整顺序），不显示合并指示器
   if (tabDragInfo.groupId === props.group.id) return false;
-  
-  // 如果拖拽的源面板组只有一个标签，表示是在拖动整个面板组，不显示合并指示器
-  const sourceGroup = manager.getPanelGroup?.(tabDragInfo.groupId);
+  const sourceGroup = manager.getPanelGroup(tabDragInfo.groupId);
   if (sourceGroup && sourceGroup.tabs.length === 1) return false;
-  
   return true;
 });
 
-// 判断是否显示插入位置指示器
 function showInsertIndicator(index: number): boolean {
   const tabDragInfo = manager.tabDragInfo?.value;
   if (!tabDragInfo) return false;
-  
-  // 只在悬停在当前面板组时显示
   if (tabDragInfo.hoveredGroupId !== props.group.id) return false;
-  
-  // 如果插入位置未定义（无效位置），不显示
   if (tabDragInfo.insertIndex === undefined) return false;
-  
-  // 检查插入索引是否匹配
   return tabDragInfo.insertIndex === index;
 }
 
-// 判断是否显示热区高亮
 const showHoverZone = computed(() => {
   const tabDragInfo = manager.tabDragInfo?.value;
   if (!tabDragInfo) return false;
-  
-  // 悬停在当前面板组时显示
   return tabDragInfo.hoveredGroupId === props.group.id;
 });
 
-// 判断某个标签是否是热区
 function isTabHotZone(index: number): boolean {
   const tabDragInfo = manager.tabDragInfo?.value;
   if (!tabDragInfo) return false;
-  
-  // 不在当前面板组
   if (tabDragInfo.hoveredGroupId !== props.group.id) return false;
-  
-  // 如果是同一面板组内拖动
   if (tabDragInfo.groupId === props.group.id) {
     const sourceTabIndex = props.group.tabs.findIndex(t => t.id === tabDragInfo.tabId);
-    
-    // 源标签及其紧邻的位置不是热区
     if (index === sourceTabIndex || index === sourceTabIndex - 1 || index === sourceTabIndex + 1) {
       return false;
     }
   }
-  
-  // 其他标签都是热区
   return true;
 }
 
-// 当前激活的标签
 const activeTab = computed(() => {
   return props.group.tabs.find(tab => tab.id === props.group.activeTabId);
 });
 
-// 计算标签页总宽度并自动调整面板宽度
-const minTabWidth = 120; // 标签页最小宽度
-const tabPadding = 24; // 标签页左右内边距总和
-const iconWidth = 20; // 图标宽度
-const closeButtonWidth = 16; // 关闭按钮宽度
-
-// 监听标签数量变化，自动调整面板宽度
-function adjustPanelWidth() {
-  if (!props.group.tabs || props.group.tabs.length === 0) return;
-  
-  // 计算所有标签页需要的总宽度
-  let totalTabsWidth = 0;
-  props.group.tabs.forEach(tab => {
-    // 基础宽度：内边距 + 图标 + 文字 + 关闭按钮
-    let tabWidth = tabPadding;
-    if (tab.icon) tabWidth += iconWidth;
-    if (tab.closable !== false && props.group.tabs.length > 1) {
-      tabWidth += closeButtonWidth;
-    }
-    // 文字宽度估算（每个字符约8px）
-    const titleWidth = (tab.title?.length || 0) * 8;
-    tabWidth += titleWidth;
-    
-    // 应用最小宽度
-    tabWidth = Math.max(tabWidth, minTabWidth);
-    totalTabsWidth += tabWidth;
-  });
-  
-  // 加上操作按钮区域的宽度（约80px）
-  const actionsWidth = 80;
-  const requiredWidth = totalTabsWidth + actionsWidth;
-  
-  // 如果需要的宽度大于当前宽度，自动扩展
-  if (requiredWidth > props.group.width) {
-    const newWidth = Math.min(requiredWidth, 800); // 最大800px
-    manager.resizePanelGroup?.(props.group.id, newWidth, props.group.height);
-  }
-}
-
-// 监听标签页变化
-watch(() => props.group.tabs.length, () => {
-  adjustPanelWidth();
-}, { immediate: true });
-
-// 面板样式
 const panelStyle = computed(() => {
   const g = props.group;
-  
+
   if (g.state === 'docked') {
-    // 停靠状态：使用相对定位，宽高由flex布局控制
-    // 根据位置决定使用哪个维度的固定尺寸
     const style: any = {
       zIndex: g.zIndex,
       flex: '0 0 auto',
     };
 
-    // 左右停靠：固定宽度，高度自适应（由flex容器平分）
     if (g.position === 'left' || g.position === 'right') {
       style.width = `${g.width}px`;
-      style.height = `${g.height}px`; // 由布局管理器计算的高度
-    }
-    // 上下停靠：固定高度，宽度自适应（由flex容器平分）
-    else if (g.position === 'top' || g.position === 'bottom') {
-      style.width = `${g.width}px`; // 由布局管理器计算的宽度
+      style.height = `${g.height}px`;
+    } else if (g.position === 'top' || g.position === 'bottom') {
+      style.width = `${g.width}px`;
       style.height = `${g.height}px`;
     }
 
@@ -288,83 +199,66 @@ const panelStyle = computed(() => {
   }
 });
 
-// 点击面板（激活）
 function handlePanelClick() {
-  manager.activatePanelGroup?.(props.group.id);
+  manager.activatePanelGroup(props.group.id);
 }
 
-// 标签页容器按下（拖动整个面板）
 function handleTabsMouseDown(e: MouseEvent) {
-  // 如果点击的是标签页本身，则不触发
   const target = e.target as HTMLElement;
   if (target.closest('.panel-tab')) {
     return;
   }
-  
+
   e.preventDefault();
-  
-  // 拖动整个面板组
-  manager.startDragGroup?.(props.group.id, e.clientX, e.clientY);
+  manager.startDragGroup(props.group.id, e.clientX, e.clientY);
 }
 
-// 标签页按下（准备拖动单个标签）
 function handleTabMouseDown(e: MouseEvent, tab: TabItem) {
   e.stopPropagation();
-  
-  // 记录起始位置
+
   dragStartPos.value = { x: e.clientX, y: e.clientY };
   hasDragged.value = false;
-  
-  // 监听鼠标移动
+
   const handleMouseMove = (moveEvent: MouseEvent) => {
     const deltaX = Math.abs(moveEvent.clientX - dragStartPos.value.x);
     const deltaY = Math.abs(moveEvent.clientY - dragStartPos.value.y);
-    
-    // 超过阈值才开始拖拽
+
     if (deltaX > dragThreshold || deltaY > dragThreshold) {
       if (!hasDragged.value) {
         hasDragged.value = true;
         isDraggingTab.value = true;
-        
-        // 启动标签页拖拽
-        manager.startDragTab?.(props.group.id, tab.id, moveEvent.clientX, moveEvent.clientY);
+        manager.startDragTab(props.group.id, tab.id, moveEvent.clientX, moveEvent.clientY);
       }
     }
   };
-  
-  // 监听鼠标释放
+
   const handleMouseUp = () => {
     document.removeEventListener('mousemove', handleMouseMove);
     document.removeEventListener('mouseup', handleMouseUp);
-    
+
     if (!hasDragged.value) {
-      // 如果没有拖拽，就是点击，切换标签
       handleTabClick(tab.id);
     }
-    
+
     isDraggingTab.value = false;
   };
-  
+
   document.addEventListener('mousemove', handleMouseMove);
   document.addEventListener('mouseup', handleMouseUp);
 }
 
-// 点击标签页（切换激活）
 function handleTabClick(tabId: string) {
-  manager.setActiveTab?.(props.group.id, tabId);
+  manager.setActiveTab(props.group.id, tabId);
 }
 
-// 关闭标签页
 function handleTabClose(tabId: string) {
-  manager.closeTab?.(props.group.id, tabId);
+  manager.closeTab(props.group.id, tabId);
 }
 
-// 分离面板
 function handleDetach() {
   const group = props.group;
   const oldPosition = group.position;
 
-  // 获取面板组当前的实际位置和尺寸（用于转换到浮动状态）
   const groupElement = document.querySelector(`[data-panel-group-id="${group.id}"]`);
   if (groupElement) {
     const rect = groupElement.getBoundingClientRect();
@@ -377,20 +271,17 @@ function handleDetach() {
   group.state = 'floating';
   group.position = 'float';
 
-  // 更新原位置的其他停靠面板布局
-  if (oldPosition !== 'float' && oldPosition !== 'center') {
+  if (oldPosition !== 'float') {
     setTimeout(() => {
-      manager.updateDockedPanelsByPosition(oldPosition);
+      manager.updateDockedLayout(oldPosition);
     }, 0);
   }
 }
 
-// 关闭面板
 function handleClose() {
-  manager.removePanelGroup?.(props.group.id);
+  manager.removePanelGroup(props.group.id);
 }
 
-// 调整大小
 const resizing = ref(false);
 const resizeDirection = ref<string>('');
 const resizeStartX = ref(0);
@@ -433,7 +324,7 @@ function handleResizeMove(e: MouseEvent) {
     newHeight = resizeStartHeight.value - deltaY;
   }
 
-  manager.resizePanelGroup?.(props.group.id, newWidth, newHeight);
+  manager.resizePanelGroup(props.group.id, newWidth, newHeight);
 }
 
 function handleResizeEnd() {
@@ -441,10 +332,9 @@ function handleResizeEnd() {
   document.removeEventListener('mousemove', handleResizeMove);
   document.removeEventListener('mouseup', handleResizeEnd);
 
-  // 如果是停靠面板组，调整大小后需要更新布局
   const group = props.group;
-  if (group.state === 'docked' && group.position !== 'float' && group.position !== 'center') {
-    manager.updateDockedPanelsByPosition(group.position);
+  if (group.state === 'docked' && group.position !== 'float') {
+    manager.updateDockedLayout(group.position);
   }
 }
 </script>
@@ -460,7 +350,6 @@ function handleResizeEnd() {
   position: relative;
 }
 
-/* 浮动面板样式 */
 .panel-floating {
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
@@ -470,20 +359,17 @@ function handleResizeEnd() {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
-/* 拖拽状态 */
 .panel-dragging {
   opacity: 0.8;
   cursor: grabbing !important;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
 }
 
-/* 停靠面板样式 */
 .panel-docked {
   border-radius: 0;
   box-shadow: none;
 }
 
-/* 标签栏 */
 .panel-tabs-header {
   display: flex;
   justify-content: space-between;
@@ -494,7 +380,6 @@ function handleResizeEnd() {
   min-height: 36px;
 }
 
-/* 标签页容器 */
 .panel-tabs-container {
   display: flex;
   flex: 1;
@@ -507,7 +392,6 @@ function handleResizeEnd() {
   position: relative;
 }
 
-/* 标签页容器有热区时的样式 */
 .panel-tabs-container.has-hover-zone {
   background: rgba(74, 144, 226, 0.05);
 }
@@ -521,13 +405,12 @@ function handleResizeEnd() {
   border-radius: 3px;
 }
 
-/* 标签页 */
 .panel-tab {
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
-  min-width: 120px; /* 增加最小宽度 */
+  min-width: 120px;
   max-width: 200px;
   background-color: rgba(255, 255, 255, 0.03);
   border-right: 1px solid rgba(255, 255, 255, 0.05);
@@ -540,25 +423,18 @@ function handleResizeEnd() {
   flex-shrink: 0;
 }
 
-/* 热区标签样式 */
 .panel-tab.is-hot-zone {
   background-color: rgba(74, 144, 226, 0.1);
   border-color: rgba(74, 144, 226, 0.3);
 }
 
-/* 插入位置指示器 */
 .insert-indicator {
   position: absolute;
   left: -2px;
   top: 0;
   bottom: 0;
   width: 3px;
-  background: linear-gradient(
-    to bottom,
-    #4A90E2 0%,
-    #6AB0F3 50%,
-    #4A90E2 100%
-  );
+  background: linear-gradient(to bottom, #4A90E2 0%, #6AB0F3 50%, #4A90E2 100%);
   box-shadow: 0 0 8px rgba(74, 144, 226, 0.8);
   z-index: 100;
   animation: insertPulse 0.6s ease-in-out infinite alternate;
@@ -566,10 +442,15 @@ function handleResizeEnd() {
 
 .insert-indicator-end {
   position: relative;
-  left: 0;
   width: 3px;
-  height: 100%;
+  min-height: 36px;
+  background: linear-gradient(to bottom, #4A90E2 0%, #6AB0F3 50%, #4A90E2 100%);
+  box-shadow: 0 0 8px rgba(74, 144, 226, 0.8);
+  z-index: 100;
+  animation: insertPulse 0.6s ease-in-out infinite alternate;
   flex-shrink: 0;
+  align-self: stretch;
+  margin-left: 2px;
 }
 
 @keyframes insertPulse {
@@ -592,16 +473,6 @@ function handleResizeEnd() {
   background-color: #2d2d2d;
   color: #fff;
   border-bottom: 2px solid #4A90E2;
-}
-
-.panel-tab.is-active::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background-color: #4A90E2;
 }
 
 .tab-icon {
@@ -643,11 +514,6 @@ function handleResizeEnd() {
   color: #fff;
 }
 
-.tab-close-btn:active {
-  background-color: rgba(255, 255, 255, 0.15);
-}
-
-/* 操作按钮 */
 .panel-actions {
   display: flex;
   gap: 4px;
@@ -675,12 +541,6 @@ function handleResizeEnd() {
   color: #fff;
 }
 
-.panel-action-btn:active {
-  background-color: #666;
-  transform: scale(0.95);
-}
-
-/* 内容区 */
 .panel-content {
   flex: 1;
   overflow: auto;
@@ -700,7 +560,6 @@ function handleResizeEnd() {
   margin: 8px 0;
 }
 
-/* 调整大小手柄 */
 .resize-handle {
   position: absolute;
   background-color: transparent;
@@ -752,13 +611,12 @@ function handleResizeEnd() {
   cursor: nwse-resize;
 }
 
-/* 合并预览指示器 */
 .merge-indicator {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 36px; /* 只覆盖标签栏区域 */
+  height: 36px;
   border: 3px solid #4A90E2;
   border-bottom: none;
   background: linear-gradient(
@@ -770,7 +628,7 @@ function handleResizeEnd() {
   pointer-events: none;
   z-index: 1000;
   animation: pulse 0.6s ease-in-out infinite alternate;
-  box-shadow: 
+  box-shadow:
     inset 0 0 20px rgba(74, 144, 226, 0.3),
     0 0 20px rgba(74, 144, 226, 0.5);
   display: flex;
@@ -798,7 +656,6 @@ function handleResizeEnd() {
   }
 }
 
-/* 拖拽标签页时 */
 .is-dragging-tab .panel-tabs-container {
   cursor: grabbing;
 }

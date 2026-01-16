@@ -81,6 +81,9 @@ export interface TabDragInfo {
   currentY: number;
   offsetX: number;
   offsetY: number;
+  hoveredGroupId?: string; // 悬停的目标面板组ID
+  insertIndex?: number; // 插入位置索引
+  dockZone?: DockZone | null; // 停靠区域预览
 }
 
 // 拖拽信息

@@ -260,6 +260,17 @@ export function useDockManager(config?: DockManagerConfig) {
           }
         : null;
     }
+
+    // 面板组也检测容器边缘吸附
+    if (group) {
+      const dockSnapResult = detectGroupSnap(group, clientX, clientY);
+      hoveredZone.value = dockSnapResult.shouldSnap
+        ? {
+            position: dockSnapResult.position!,
+            rect: dockSnapResult.targetRect!,
+          }
+        : null;
+    }
   }
 
   /**
@@ -326,9 +337,34 @@ export function useDockManager(config?: DockManagerConfig) {
 
     // 处理面板组
     if (group) {
-      // TODO: 可以添加面板组的停泊检测逻辑
-      group.state = 'floating';
-      group.position = 'float';
+      // 记录原来的位置
+      const oldPosition = group.position;
+      const oldState = group.state;
+
+      // 检测是否应该吸附
+      const snapResult = detectGroupSnap(
+        group,
+        dragInfo.value.currentX,
+        dragInfo.value.currentY
+      );
+
+      if (snapResult.shouldSnap && snapResult.position) {
+        // 执行吸附
+        group.state = 'docked';
+        group.position = snapResult.position;
+
+        // 更新该位置所有停靠面板/面板组的尺寸
+        updateDockedPanelsByPosition(group.position);
+      } else {
+        // 保持浮动状态
+        group.state = 'floating';
+        group.position = 'float';
+
+        // 如果之前是停靠状态，需要更新原位置的布局
+        if (oldState === 'docked' && oldPosition !== 'float' && oldPosition !== 'center') {
+          updateDockedPanelsByPosition(oldPosition);
+        }
+      }
     }
 
     dragInfo.value = null;
@@ -359,6 +395,241 @@ export function useDockManager(config?: DockManagerConfig) {
     const panelSnap = detectPanelSnap(panel, mouseX, mouseY);
     if (panelSnap.shouldSnap) {
       return panelSnap;
+    }
+
+    return { shouldSnap: false };
+  }
+
+  /**
+   * 检测面板组吸附
+   */
+  function detectGroupSnap(
+    group: PanelGroup,
+    mouseX: number,
+    mouseY: number
+  ): SnapResult {
+    if (!containerRect.value) {
+      return { shouldSnap: false };
+    }
+
+    const containerR = containerRect.value;
+
+    // 1. 检测容器边缘吸附
+    const edgeSnap = detectContainerEdgeSnap(mouseX, mouseY, containerR);
+    if (edgeSnap.shouldSnap) {
+      return edgeSnap;
+    }
+
+    // 2. 检测其他已停靠面板/面板组吸附
+    const groupSnap = detectGroupToPanelSnap(group, mouseX, mouseY);
+    if (groupSnap.shouldSnap) {
+      return groupSnap;
+    }
+
+    return { shouldSnap: false };
+  }
+
+  /**
+   * 检测面板组与其他面板/面板组的吸附
+   */
+  function detectGroupToPanelSnap(
+    draggedGroup: PanelGroup,
+    mouseX: number,
+    mouseY: number
+  ): SnapResult {
+    if (!containerRect.value) return { shouldSnap: false };
+
+    const containerR = containerRect.value;
+
+    // 遍历所有已停靠的面板
+    for (const [id, panel] of panels.value) {
+      if (panel.state !== 'docked') continue;
+
+      const panelElement = document.querySelector(`[data-panel-id="${id}"]`);
+      if (!panelElement) continue;
+
+      const rect = panelElement.getBoundingClientRect();
+
+      // 根据面板的停靠位置，检测是否可以吸附在同一侧
+      if (panel.position === 'left' || panel.position === 'right') {
+        const isInHorizontalRange = mouseX >= rect.left - hotZoneSize && 
+                                     mouseX <= rect.right + hotZoneSize;
+
+        if (!isInHorizontalRange) continue;
+
+        const sameSidePanels = Array.from(panels.value.values()).filter(
+          p => p.state === 'docked' && p.position === panel.position
+        );
+        const sameSideGroups = Array.from(panelGroups.value.values()).filter(
+          g => g.state === 'docked' && g.position === panel.position
+        );
+        const totalCount = sameSidePanels.length + sameSideGroups.length;
+        const newHeightPerPanel = containerR.height / (totalCount + 1);
+
+        if (Math.abs(mouseY - rect.top) < hotZoneSize) {
+          return {
+            shouldSnap: true,
+            position: panel.position,
+            targetPanelId: id,
+            targetRect: new DOMRect(
+              rect.left,
+              rect.top - newHeightPerPanel,
+              rect.width,
+              newHeightPerPanel
+            ),
+          };
+        }
+
+        if (Math.abs(mouseY - rect.bottom) < hotZoneSize) {
+          return {
+            shouldSnap: true,
+            position: panel.position,
+            targetPanelId: id,
+            targetRect: new DOMRect(
+              rect.left,
+              rect.bottom,
+              rect.width,
+              newHeightPerPanel
+            ),
+          };
+        }
+
+      } else if (panel.position === 'top' || panel.position === 'bottom') {
+        const isInVerticalRange = mouseY >= rect.top - hotZoneSize && 
+                                   mouseY <= rect.bottom + hotZoneSize;
+
+        if (!isInVerticalRange) continue;
+
+        const sameSidePanels = Array.from(panels.value.values()).filter(
+          p => p.state === 'docked' && p.position === panel.position
+        );
+        const sameSideGroups = Array.from(panelGroups.value.values()).filter(
+          g => g.state === 'docked' && g.position === panel.position
+        );
+        const totalCount = sameSidePanels.length + sameSideGroups.length;
+        const newWidthPerPanel = containerR.width / (totalCount + 1);
+
+        if (Math.abs(mouseX - rect.left) < hotZoneSize) {
+          return {
+            shouldSnap: true,
+            position: panel.position,
+            targetPanelId: id,
+            targetRect: new DOMRect(
+              rect.left - newWidthPerPanel,
+              rect.top,
+              newWidthPerPanel,
+              rect.height
+            ),
+          };
+        }
+
+        if (Math.abs(mouseX - rect.right) < hotZoneSize) {
+          return {
+            shouldSnap: true,
+            position: panel.position,
+            targetPanelId: id,
+            targetRect: new DOMRect(
+              rect.right,
+              rect.top,
+              newWidthPerPanel,
+              rect.height
+            ),
+          };
+        }
+      }
+    }
+
+    // 遍历所有已停靠的面板组
+    for (const [id, group] of panelGroups.value) {
+      if (id === draggedGroup.id || group.state !== 'docked') continue;
+
+      const groupElement = document.querySelector(`[data-panel-group-id="${id}"]`);
+      if (!groupElement) continue;
+
+      const rect = groupElement.getBoundingClientRect();
+
+      if (group.position === 'left' || group.position === 'right') {
+        const isInHorizontalRange = mouseX >= rect.left - hotZoneSize && 
+                                     mouseX <= rect.right + hotZoneSize;
+
+        if (!isInHorizontalRange) continue;
+
+        const sameSidePanels = Array.from(panels.value.values()).filter(
+          p => p.state === 'docked' && p.position === group.position
+        );
+        const sameSideGroups = Array.from(panelGroups.value.values()).filter(
+          g => g.state === 'docked' && g.position === group.position
+        );
+        const totalCount = sameSidePanels.length + sameSideGroups.length;
+        const newHeightPerPanel = containerR.height / (totalCount + 1);
+
+        if (Math.abs(mouseY - rect.top) < hotZoneSize) {
+          return {
+            shouldSnap: true,
+            position: group.position,
+            targetRect: new DOMRect(
+              rect.left,
+              rect.top - newHeightPerPanel,
+              rect.width,
+              newHeightPerPanel
+            ),
+          };
+        }
+
+        if (Math.abs(mouseY - rect.bottom) < hotZoneSize) {
+          return {
+            shouldSnap: true,
+            position: group.position,
+            targetRect: new DOMRect(
+              rect.left,
+              rect.bottom,
+              rect.width,
+              newHeightPerPanel
+            ),
+          };
+        }
+
+      } else if (group.position === 'top' || group.position === 'bottom') {
+        const isInVerticalRange = mouseY >= rect.top - hotZoneSize && 
+                                   mouseY <= rect.bottom + hotZoneSize;
+
+        if (!isInVerticalRange) continue;
+
+        const sameSidePanels = Array.from(panels.value.values()).filter(
+          p => p.state === 'docked' && p.position === group.position
+        );
+        const sameSideGroups = Array.from(panelGroups.value.values()).filter(
+          g => g.state === 'docked' && g.position === group.position
+        );
+        const totalCount = sameSidePanels.length + sameSideGroups.length;
+        const newWidthPerPanel = containerR.width / (totalCount + 1);
+
+        if (Math.abs(mouseX - rect.left) < hotZoneSize) {
+          return {
+            shouldSnap: true,
+            position: group.position,
+            targetRect: new DOMRect(
+              rect.left - newWidthPerPanel,
+              rect.top,
+              newWidthPerPanel,
+              rect.height
+            ),
+          };
+        }
+
+        if (Math.abs(mouseX - rect.right) < hotZoneSize) {
+          return {
+            shouldSnap: true,
+            position: group.position,
+            targetRect: new DOMRect(
+              rect.right,
+              rect.top,
+              newWidthPerPanel,
+              rect.height
+            ),
+          };
+        }
+      }
     }
 
     return { shouldSnap: false };
@@ -842,9 +1113,35 @@ export function useDockManager(config?: DockManagerConfig) {
 
     group.zIndex = ++maxZIndex.value;
 
+    // 记录原来的位置，用于后续更新布局
+    const oldPosition = group.position;
+    const wasDockedState = group.state === 'docked';
+
+    // 如果面板组是停靠状态，转换为浮动状态
     if (group.state === 'docked') {
+      // 设置面板组为浮动状态，并计算其绝对位置
       group.state = 'floating';
+      
+      // 获取面板组在停靠状态下的实际位置（相对于视口）
+      const groupElement = document.querySelector(`[data-panel-group-id="${groupId}"]`);
+      if (groupElement) {
+        const rect = groupElement.getBoundingClientRect();
+        group.x = rect.left;
+        group.y = rect.top;
+        // 保持当前尺寸
+        group.width = rect.width;
+        group.height = rect.height;
+      }
+      
       group.position = 'float';
+
+      // 更新原位置的其他停靠面板/面板组布局
+      if (wasDockedState && oldPosition !== 'float' && oldPosition !== 'center') {
+        // 延迟更新，确保当前面板组已经从停靠列表中移除
+        setTimeout(() => {
+          updateDockedPanelsByPosition(oldPosition);
+        }, 0);
+      }
     }
 
     group.state = 'dragging';
@@ -898,19 +1195,265 @@ export function useDockManager(config?: DockManagerConfig) {
     tabDragInfo.value.currentX = clientX;
     tabDragInfo.value.currentY = clientY;
 
-    // 检测是否悬停在其他面板组上
+    // 优先检测面板组标签栏（最高优先级）
     detectTabHover(clientX, clientY);
+
+    // 如果悬停在面板组标签栏上，清除停靠预览
+    if (tabDragInfo.value.hoveredGroupId) {
+      tabDragInfo.value.dockZone = null;
+      hoveredZone.value = null;
+      return;
+    }
+
+    // 如果没有悬停在面板组标签栏上，检测停靠区域
+    const dockSnapResult = detectTabDockSnap(clientX, clientY);
+    if (dockSnapResult.shouldSnap) {
+      tabDragInfo.value.dockZone = {
+        position: dockSnapResult.position!,
+        rect: dockSnapResult.targetRect!,
+      };
+      hoveredZone.value = tabDragInfo.value.dockZone;
+    } else {
+      tabDragInfo.value.dockZone = null;
+      hoveredZone.value = null;
+    }
   }
 
   /**
-   * 检测标签页悬停
+   * 检测标签拖拽时的停靠区域
+   */
+  function detectTabDockSnap(mouseX: number, mouseY: number): SnapResult {
+    if (!containerRect.value) {
+      return { shouldSnap: false };
+    }
+
+    const containerR = containerRect.value;
+
+    // 1. 检测容器边缘吸附
+    const edgeSnap = detectContainerEdgeSnap(mouseX, mouseY, containerR);
+    if (edgeSnap.shouldSnap) {
+      return edgeSnap;
+    }
+
+    // 2. 检测已停靠面板/面板组的吸附
+    const dockSnap = detectTabToDockSnap(mouseX, mouseY);
+    if (dockSnap.shouldSnap) {
+      return dockSnap;
+    }
+
+    return { shouldSnap: false };
+  }
+
+  /**
+   * 检测标签拖拽到已停靠面板/面板组的吸附
+   */
+  function detectTabToDockSnap(mouseX: number, mouseY: number): SnapResult {
+    if (!containerRect.value) return { shouldSnap: false };
+
+    const containerR = containerRect.value;
+
+    // 遍历所有已停靠的面板
+    for (const [id, panel] of panels.value) {
+      if (panel.state !== 'docked') continue;
+
+      const panelElement = document.querySelector(`[data-panel-id="${id}"]`);
+      if (!panelElement) continue;
+
+      const rect = panelElement.getBoundingClientRect();
+
+      if (panel.position === 'left' || panel.position === 'right') {
+        const isInHorizontalRange = mouseX >= rect.left - hotZoneSize && 
+                                     mouseX <= rect.right + hotZoneSize;
+
+        if (!isInHorizontalRange) continue;
+
+        const sameSidePanels = Array.from(panels.value.values()).filter(
+          p => p.state === 'docked' && p.position === panel.position
+        );
+        const sameSideGroups = Array.from(panelGroups.value.values()).filter(
+          g => g.state === 'docked' && g.position === panel.position
+        );
+        const totalCount = sameSidePanels.length + sameSideGroups.length;
+        const newHeightPerPanel = containerR.height / (totalCount + 1);
+
+        if (Math.abs(mouseY - rect.top) < hotZoneSize) {
+          return {
+            shouldSnap: true,
+            position: panel.position,
+            targetRect: new DOMRect(
+              rect.left,
+              rect.top - newHeightPerPanel,
+              rect.width,
+              newHeightPerPanel
+            ),
+          };
+        }
+
+        if (Math.abs(mouseY - rect.bottom) < hotZoneSize) {
+          return {
+            shouldSnap: true,
+            position: panel.position,
+            targetRect: new DOMRect(
+              rect.left,
+              rect.bottom,
+              rect.width,
+              newHeightPerPanel
+            ),
+          };
+        }
+
+      } else if (panel.position === 'top' || panel.position === 'bottom') {
+        const isInVerticalRange = mouseY >= rect.top - hotZoneSize && 
+                                   mouseY <= rect.bottom + hotZoneSize;
+
+        if (!isInVerticalRange) continue;
+
+        const sameSidePanels = Array.from(panels.value.values()).filter(
+          p => p.state === 'docked' && p.position === panel.position
+        );
+        const sameSideGroups = Array.from(panelGroups.value.values()).filter(
+          g => g.state === 'docked' && g.position === panel.position
+        );
+        const totalCount = sameSidePanels.length + sameSideGroups.length;
+        const newWidthPerPanel = containerR.width / (totalCount + 1);
+
+        if (Math.abs(mouseX - rect.left) < hotZoneSize) {
+          return {
+            shouldSnap: true,
+            position: panel.position,
+            targetRect: new DOMRect(
+              rect.left - newWidthPerPanel,
+              rect.top,
+              newWidthPerPanel,
+              rect.height
+            ),
+          };
+        }
+
+        if (Math.abs(mouseX - rect.right) < hotZoneSize) {
+          return {
+            shouldSnap: true,
+            position: panel.position,
+            targetRect: new DOMRect(
+              rect.right,
+              rect.top,
+              newWidthPerPanel,
+              rect.height
+            ),
+          };
+        }
+      }
+    }
+
+    // 遍历所有已停靠的面板组
+    for (const [id, group] of panelGroups.value) {
+      if (group.state !== 'docked') continue;
+
+      const groupElement = document.querySelector(`[data-panel-group-id="${id}"]`);
+      if (!groupElement) continue;
+
+      const rect = groupElement.getBoundingClientRect();
+
+      if (group.position === 'left' || group.position === 'right') {
+        const isInHorizontalRange = mouseX >= rect.left - hotZoneSize && 
+                                     mouseX <= rect.right + hotZoneSize;
+
+        if (!isInHorizontalRange) continue;
+
+        const sameSidePanels = Array.from(panels.value.values()).filter(
+          p => p.state === 'docked' && p.position === group.position
+        );
+        const sameSideGroups = Array.from(panelGroups.value.values()).filter(
+          g => g.state === 'docked' && g.position === group.position
+        );
+        const totalCount = sameSidePanels.length + sameSideGroups.length;
+        const newHeightPerPanel = containerR.height / (totalCount + 1);
+
+        if (Math.abs(mouseY - rect.top) < hotZoneSize) {
+          return {
+            shouldSnap: true,
+            position: group.position,
+            targetRect: new DOMRect(
+              rect.left,
+              rect.top - newHeightPerPanel,
+              rect.width,
+              newHeightPerPanel
+            ),
+          };
+        }
+
+        if (Math.abs(mouseY - rect.bottom) < hotZoneSize) {
+          return {
+            shouldSnap: true,
+            position: group.position,
+            targetRect: new DOMRect(
+              rect.left,
+              rect.bottom,
+              rect.width,
+              newHeightPerPanel
+            ),
+          };
+        }
+
+      } else if (group.position === 'top' || group.position === 'bottom') {
+        const isInVerticalRange = mouseY >= rect.top - hotZoneSize && 
+                                   mouseY <= rect.bottom + hotZoneSize;
+
+        if (!isInVerticalRange) continue;
+
+        const sameSidePanels = Array.from(panels.value.values()).filter(
+          p => p.state === 'docked' && p.position === group.position
+        );
+        const sameSideGroups = Array.from(panelGroups.value.values()).filter(
+          g => g.state === 'docked' && g.position === group.position
+        );
+        const totalCount = sameSidePanels.length + sameSideGroups.length;
+        const newWidthPerPanel = containerR.width / (totalCount + 1);
+
+        if (Math.abs(mouseX - rect.left) < hotZoneSize) {
+          return {
+            shouldSnap: true,
+            position: group.position,
+            targetRect: new DOMRect(
+              rect.left - newWidthPerPanel,
+              rect.top,
+              newWidthPerPanel,
+              rect.height
+            ),
+          };
+        }
+
+        if (Math.abs(mouseX - rect.right) < hotZoneSize) {
+          return {
+            shouldSnap: true,
+            position: group.position,
+            targetRect: new DOMRect(
+              rect.right,
+              rect.top,
+              newWidthPerPanel,
+              rect.height
+            ),
+          };
+        }
+      }
+    }
+
+    return { shouldSnap: false };
+  }
+
+  /**
+   * 检测标签页悬停（精确计算插入位置）
    */
   function detectTabHover(clientX: number, clientY: number) {
     hoveredGroup.value = null;
+    
+    if (!tabDragInfo.value) return;
 
-    for (const [id] of panelGroups.value) {
-      if (id === tabDragInfo.value?.groupId) continue;
+    const sourceGroupId = tabDragInfo.value.groupId;
+    const sourceTabId = tabDragInfo.value.tabId;
 
+    // 检查所有面板组（包括源面板组）
+    for (const [id, group] of panelGroups.value) {
       // 检测鼠标是否在面板组的标签栏区域内
       const element = document.querySelector(`[data-panel-group-id="${id}"]`);
       if (!element) continue;
@@ -925,8 +1468,54 @@ export function useDockManager(config?: DockManagerConfig) {
         clientY <= rect.top + tabsHeaderHeight
       ) {
         hoveredGroup.value = id;
+        
+        // 计算精确的插入位置
+        const tabsContainer = element.querySelector('.panel-tabs-container');
+        if (tabsContainer) {
+          const tabs = tabsContainer.querySelectorAll('.panel-tab');
+          let insertIndex = group.tabs.length; // 默认插入到末尾
+
+          // 遍历所有标签，找到插入位置
+          for (let i = 0; i < tabs.length; i++) {
+            const tabElement = tabs[i] as HTMLElement;
+            const tabRect = tabElement.getBoundingClientRect();
+            const tabMidpoint = tabRect.left + tabRect.width / 2;
+
+            // 如果鼠标在标签的左半部分，插入到这个标签之前
+            if (clientX < tabMidpoint) {
+              insertIndex = i;
+              break;
+            }
+          }
+
+          // 如果是同一面板组内拖动，需要排除无效位置
+          if (id === sourceGroupId) {
+            const sourceTabIndex = group.tabs.findIndex(t => t.id === sourceTabId);
+            if (sourceTabIndex !== -1) {
+              // 如果插入位置是源标签的当前位置或紧接着的下一个位置，则无效
+              // 例如：拖动 tab1(index=0) 到 index=0 或 index=1 都是无意义的
+              if (insertIndex === sourceTabIndex || insertIndex === sourceTabIndex + 1) {
+                // 清除插入位置，表示无效
+                tabDragInfo.value.hoveredGroupId = id;
+                tabDragInfo.value.insertIndex = undefined;
+                break;
+              }
+            }
+          }
+
+          // 更新插入位置信息
+          tabDragInfo.value.hoveredGroupId = id;
+          tabDragInfo.value.insertIndex = insertIndex;
+        }
+        
         break;
       }
+    }
+    
+    // 如果没有悬停在任何面板组上，清除插入位置信息
+    if (!hoveredGroup.value && tabDragInfo.value) {
+      tabDragInfo.value.hoveredGroupId = undefined;
+      tabDragInfo.value.insertIndex = undefined;
     }
   }
 
@@ -936,30 +1525,41 @@ export function useDockManager(config?: DockManagerConfig) {
   function endDragTab() {
     if (!tabDragInfo.value) return;
 
-    const { groupId, tabId } = tabDragInfo.value;
+    const { groupId, tabId, hoveredGroupId, insertIndex, dockZone } = tabDragInfo.value;
     const sourceGroup = panelGroups.value.get(groupId);
     
     if (!sourceGroup) {
       tabDragInfo.value = null;
+      hoveredZone.value = null;
       return;
     }
 
-    // 如果悬停在其他面板组上，执行合并
-    if (hoveredGroup.value && hoveredGroup.value !== groupId) {
-      mergeTabToGroup(groupId, tabId, hoveredGroup.value);
+    // 情况1：悬停在面板组上（包括自己或其他面板组）
+    if (hoveredGroupId !== undefined && insertIndex !== undefined) {
+      if (hoveredGroupId === groupId) {
+        // 同一面板组内的标签排序
+        reorderTabInGroup(groupId, tabId, insertIndex);
+      } else {
+        // 合并到其他面板组的指定位置
+        mergeTabToGroup(groupId, tabId, hoveredGroupId, insertIndex);
+      }
+    } else if (dockZone && sourceGroup.tabs.length > 1) {
+      // 情况2：检测到停靠区域，且源面板组有多个标签，拆分并停靠
+      splitTabAndDock(groupId, tabId, dockZone.position);
     } else if (sourceGroup.tabs.length > 1) {
-      // 如果源面板组有多个标签，将标签拆分成新面板组
+      // 情况3：没有悬停在任何面板组上，且源面板组有多个标签，将标签拆分成新面板组
       splitTabToNewGroup(groupId, tabId, tabDragInfo.value.currentX, tabDragInfo.value.currentY);
     }
 
     tabDragInfo.value = null;
     hoveredGroup.value = null;
+    hoveredZone.value = null;
   }
 
   /**
-   * 合并标签页到面板组
+   * 合并标签页到面板组（支持指定插入位置）
    */
-  function mergeTabToGroup(sourceGroupId: string, tabId: string, targetGroupId: string) {
+  function mergeTabToGroup(sourceGroupId: string, tabId: string, targetGroupId: string, insertIndex?: number) {
     const sourceGroup = panelGroups.value.get(sourceGroupId);
     const targetGroup = panelGroups.value.get(targetGroupId);
     
@@ -973,8 +1573,14 @@ export function useDockManager(config?: DockManagerConfig) {
     // 从源面板组移除标签
     sourceGroup.tabs.splice(tabIndex, 1);
 
-    // 添加到目标面板组
-    targetGroup.tabs.push(tab);
+    // 添加到目标面板组的指定位置
+    if (insertIndex !== undefined && insertIndex >= 0 && insertIndex <= targetGroup.tabs.length) {
+      targetGroup.tabs.splice(insertIndex, 0, tab);
+    } else {
+      // 默认添加到末尾
+      targetGroup.tabs.push(tab);
+    }
+    
     targetGroup.activeTabId = tabId;
 
     // 如果源面板组没有标签了，移除它
@@ -984,6 +1590,29 @@ export function useDockManager(config?: DockManagerConfig) {
       // 如果移除的是激活的标签，激活另一个
       sourceGroup.activeTabId = sourceGroup.tabs[Math.min(tabIndex, sourceGroup.tabs.length - 1)].id;
     }
+  }
+
+  /**
+   * 同一面板组内调整标签顺序
+   */
+  function reorderTabInGroup(groupId: string, tabId: string, newIndex: number) {
+    const group = panelGroups.value.get(groupId);
+    if (!group) return;
+
+    const currentIndex = group.tabs.findIndex(t => t.id === tabId);
+    if (currentIndex === -1) return;
+
+    // 如果位置没有变化，不做任何操作
+    if (currentIndex === newIndex) return;
+
+    // 调整索引（如果新位置在当前位置之后，需要考虑移除元素后的偏移）
+    const adjustedNewIndex = newIndex > currentIndex ? newIndex - 1 : newIndex;
+
+    // 移除标签
+    const [tab] = group.tabs.splice(currentIndex, 1);
+
+    // 插入到新位置
+    group.tabs.splice(adjustedNewIndex, 0, tab);
   }
 
   /**
@@ -1021,6 +1650,51 @@ export function useDockManager(config?: DockManagerConfig) {
     };
 
     panelGroups.value.set(newGroupId, newGroup);
+
+    // 如果源面板组的激活标签是被拆分的，更新激活标签
+    if (sourceGroup.activeTabId === tabId) {
+      sourceGroup.activeTabId = sourceGroup.tabs[Math.min(tabIndex, sourceGroup.tabs.length - 1)].id;
+    }
+  }
+
+  /**
+   * 拆分标签并停靠到指定位置
+   */
+  function splitTabAndDock(sourceGroupId: string, tabId: string, dockPosition: DockPosition) {
+    const sourceGroup = panelGroups.value.get(sourceGroupId);
+    if (!sourceGroup) return;
+
+    const tabIndex = sourceGroup.tabs.findIndex(t => t.id === tabId);
+    if (tabIndex === -1) return;
+
+    const tab = sourceGroup.tabs[tabIndex];
+
+    // 从源面板组移除标签
+    sourceGroup.tabs.splice(tabIndex, 1);
+
+    // 创建新面板组并直接停靠
+    const newGroupId = `group-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const newGroup: PanelGroup = {
+      id: newGroupId,
+      tabs: [tab],
+      activeTabId: tab.id,
+      width: sourceGroup.width,
+      height: sourceGroup.height,
+      minWidth: sourceGroup.minWidth,
+      minHeight: sourceGroup.minHeight,
+      x: 0,
+      y: 0,
+      zIndex: ++maxZIndex.value,
+      state: 'docked',
+      position: dockPosition,
+      resizable: sourceGroup.resizable,
+      dockedPanels: [],
+    };
+
+    panelGroups.value.set(newGroupId, newGroup);
+
+    // 更新该位置的所有停靠面板/面板组的布局
+    updateDockedPanelsByPosition(dockPosition);
 
     // 如果源面板组的激活标签是被拆分的，更新激活标签
     if (sourceGroup.activeTabId === tabId) {
