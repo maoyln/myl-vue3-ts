@@ -368,10 +368,22 @@ export const asyncRoutes: RouteRecordRaw[] = [
             component: () => import('@/views/DockingFrame/Berthing01.vue'),
           },
           {
+            path: 'Berthing02V2',
+            name: 'Berthing02V2',
+            meta: { title: 'Berthing02V2' },
+            component: () => import('@/views/DockingFrame/Berthing02V2.vue'),
+          },
+          {
             path: 'panelDemo',
             name: 'panelDemo',
             meta: { title: 'panelDemo' },
             component: () => import('@/views/panelDemo/DockingPanel.vue'),
+          },
+          {
+            path: 'DockingComponents',
+            name: 'DockingComponents',
+            meta: { title: 'DockingComponents' },
+            component: () => import('@/views/DockingComponents/index.vue'),
           },
         ],
       }

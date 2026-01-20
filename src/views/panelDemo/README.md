@@ -13,6 +13,15 @@
 - 🎈 **坐标定位**：fixed + x/y 的自由布局（悬浮模式）
 - 📋 **数据驱动**：修改 JSON 配置即可切换布局方式
 
+**🆕 扩展功能**：
+- 🎯 **热区识别**：拖拽时显示停靠预览
+- 📏 **占比调整**：拖拽手柄动态调整分组/面板占比
+- 🔢 **层级管理**：悬浮面板 zIndex 控制
+- 🔄 **标签拖拽**：跨面板拖动标签页
+- 🔗 **面板合并**：自动合并和拆分面板
+
+> 详细功能说明请查看 [FEATURES.md](./FEATURES.md)
+
 ## 🎯 核心特性
 
 - ✅ **停靠布局**：支持左、右、上、下四个方向的停靠容器
@@ -28,19 +37,22 @@
 panelDemo/
 ├── types.ts                          # 类型定义文件
 ├── configs.ts                        # 配置数据文件（4套方案）
+├── usePanelManager.ts                # ⭐ 面板管理器（核心逻辑 570行）
 ├── TabItemComponent.vue              # 标签项组件
 ├── PanelGroupComponent.vue           # 面板内容组件（Tab + Content）
 ├── PanelContainer.vue                # ⭐ 统一展示容器（停靠和悬浮完全一样）
-├── LayoutManagerComponent.vue        # ⭐ 布局控制器（统一管理所有布局）
+├── LayoutManagerComponent.vue        # ⭐ 布局控制器（统一管理所有布局 650行）
 ├── DockingPanel.vue                  # 演示Demo主页面
 ├── index.ts                          # 导出文件
 ├── index.vue                         # 路由入口
 ├── README.md                         # 使用说明文档
 ├── ARCHITECTURE.md                   # 架构详细说明
-└── REFACTORING_SUMMARY.md            # 重构总结
+├── REFACTORING_SUMMARY.md            # 重构总结
+└── FEATURES.md                       # ⭐ 扩展功能详细说明
 ```
 
-**组件数量**：最终精简到 **5 个核心组件** ✨
+**核心组件**：5个 Vue 组件 + 1个 Composable ✨  
+**新增代码**：~770行（扩展功能）
 
 ## 🚀 快速开始
 

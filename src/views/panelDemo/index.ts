@@ -9,6 +9,9 @@ export { default as PanelContainer } from './PanelContainer.vue';
 export { default as LayoutManagerComponent } from './LayoutManagerComponent.vue';
 export { default as DockingPanel } from './DockingPanel.vue';
 
+// Composable 导出
+export { usePanelManager } from './usePanelManager';
+
 // 类型导出
 export type {
   // 基础类型
