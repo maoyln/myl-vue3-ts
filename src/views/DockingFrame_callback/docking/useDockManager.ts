@@ -50,6 +50,9 @@ export function useDockManager(config?: DockManagerConfig) {
     const groupId = config.id || `group-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
     const tabId = `tab-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`; // 标签ID
 
+    const width = config.width || minPanelWidth;
+    const height = config.height || minPanelHeight;
+
     const group: PanelGroup = {
       id: groupId,
       tabs: [{
@@ -59,8 +62,10 @@ export function useDockManager(config?: DockManagerConfig) {
         closable: config.closable !== false,
       }],
       activeTabId: tabId,
-      width: config.width || minPanelWidth,
-      height: config.height || minPanelHeight,
+      width,
+      height,
+      originalWidth: width, // 保存原始宽度
+      originalHeight: height, // 保存原始高度
       x: 100,
       y: 100,
       zIndex: ++maxZIndex.value,
@@ -108,37 +113,60 @@ export function useDockManager(config?: DockManagerConfig) {
     const oldPosition = group.position;
     const wasDocked = group.state === 'docked';
 
+    let offsetX = 0;
+    let offsetY = 0;
+
     if (wasDocked) {
-      group.state = 'floating';
-      // TODO calss获取标签组元素
+      // 获取当前元素位置和尺寸
       const element = document.querySelector(`[data-panel-group-id="${groupId}"]`);
       if (element) {
         const rect = element.getBoundingClientRect();
-        group.x = rect.left; // 面板组x坐标
-        group.y = rect.top; // 面板组y坐标
-        group.width = rect.width; // 面板组宽度
-        group.height = rect.height; // 面板组高度
+        const oldWidth = rect.width;
+        const oldHeight = rect.height;
+        
+        // 计算鼠标在当前面板中的相对位置（百分比）
+        const relativeX = (clientX - rect.left) / oldWidth;
+        const relativeY = (clientY - rect.top) / oldHeight;
+        
+        // 恢复原始宽高
+        const newWidth = group.originalWidth;
+        const newHeight = group.originalHeight;
+        
+        // 根据相对位置计算新的 x, y 坐标，保持鼠标在面板中的相对位置不变
+        group.x = clientX - (newWidth * relativeX);
+        group.y = clientY - (newHeight * relativeY);
+        group.width = newWidth;
+        group.height = newHeight;
+        
+        // 计算偏移量（鼠标相对于面板左上角的距离）
+        offsetX = newWidth * relativeX;
+        offsetY = newHeight * relativeY;
       }
+      
+      group.state = 'floating';
       group.position = 'float';
 
       if (oldPosition !== 'float') {
-        // setTimeout(() => updateDockedLayout(oldPosition), 0);
         requestAnimationFrame(() => {
           updateDockedLayout(oldPosition);
         });
       }
+    } else {
+      // 浮动状态直接计算偏移
+      offsetX = clientX - group.x;
+      offsetY = clientY - group.y;
     }
 
     group.state = 'dragging';
 
     dragInfo.value = {
       groupId,
-      startX: clientX, // 开始x坐标
-      startY: clientY, // 开始y坐标
-      currentX: clientX, // 当前x坐标
-      currentY: clientY, // 当前y坐标
-      offsetX: clientX - group.x, // 偏移量x
-      offsetY: clientY - group.y, // 偏移量y
+      startX: clientX,
+      startY: clientY,
+      currentX: clientX,
+      currentY: clientY,
+      offsetX,
+      offsetY,
     };
 
     updateContainerRect();
@@ -157,6 +185,15 @@ export function useDockManager(config?: DockManagerConfig) {
     group.x = clientX - dragInfo.value.offsetX;
     group.y = clientY - dragInfo.value.offsetY;
 
+    // 检测是否悬停在其他组上（用于组合并）
+    detectGroupHover(clientX, clientY);
+
+    // 如果悬停在其他组上，清除停靠预览
+    if (hoveredGroup.value && hoveredGroup.value !== dragInfo.value.groupId) {
+      hoveredZone.value = null;
+      return;
+    }
+
     // 检测停靠区域
     const dockResult = detectDockZone(clientX, clientY);
     hoveredZone.value = dockResult; // 悬停的区域
@@ -170,15 +207,29 @@ export function useDockManager(config?: DockManagerConfig) {
     if (!group) {
       dragInfo.value = null;
       hoveredZone.value = null;
+      hoveredGroup.value = null;
       return;
     }
 
     const oldPosition = group.position;
     const oldState = group.state;
 
+    // 优先检测组合并
+    if (hoveredGroup.value && hoveredGroup.value !== dragInfo.value.groupId) {
+      mergeGroup(dragInfo.value.groupId, hoveredGroup.value);
+      dragInfo.value = null;
+      hoveredZone.value = null;
+      hoveredGroup.value = null;
+      return;
+    }
+
+    // 检测停靠区域
     const dockResult = detectDockZone(dragInfo.value.currentX, dragInfo.value.currentY);
 
     if (dockResult) {
+      // 停靠前保存当前宽高作为原始宽高
+      group.originalWidth = group.width;
+      group.originalHeight = group.height;
       group.state = 'docked';
       group.position = dockResult.position;
       updateDockedLayout(dockResult.position);
@@ -193,6 +244,7 @@ export function useDockManager(config?: DockManagerConfig) {
 
     dragInfo.value = null;
     hoveredZone.value = null;
+    hoveredGroup.value = null;
   }
 
   // 开始拖拽标签
@@ -203,6 +255,13 @@ export function useDockManager(config?: DockManagerConfig) {
     const tab = group.tabs.find(t => t.id === tabId);
     if (!tab) return;
 
+    // 如果只有一个标签，直接拖拽整个面板组（面板会跟随鼠标移动）
+    if (group.tabs.length === 1) {
+      startDragGroup(groupId, clientX, clientY);
+      return;
+    }
+
+    // 多个标签时，走标签拖拽逻辑
     tabDragInfo.value = {
       groupId,
       tabId,
@@ -211,11 +270,6 @@ export function useDockManager(config?: DockManagerConfig) {
       currentX: clientX,
       currentY: clientY,
     };
-
-    // 如果只有一个标签，拖拽整个面板组
-    if (group.tabs.length === 1) {
-      startDragGroup(groupId, clientX, clientY);
-    }
   }
 
   // 拖拽标签中
@@ -228,16 +282,14 @@ export function useDockManager(config?: DockManagerConfig) {
     // 检测悬停的面板组
     detectTabHover(clientX, clientY);
 
-    // 如果悬停在面板组上，清除停靠预览
-    // TODO 如果拖拽至tabs中，则不进行容器停靠-其他地方修复
-    // TODO 当前悬浮的tabs不等于自己拖拽的tabs
-    // TODO 这里会影响拆分之后，悬浮的tab的吸附到容器的效果
-    if (tabDragInfo.value.hoveredGroupId !== tabDragInfo.value.groupId) {
+    // 如果悬停在其他面板组上（准备合并tab），清除停靠预览
+    if (tabDragInfo.value.hoveredGroupId && 
+        tabDragInfo.value.hoveredGroupId !== tabDragInfo.value.groupId) {
       hoveredZone.value = null;
       return;
     }
 
-    // 检测停靠区域
+    // 如果没有悬停在其他组上，检测容器边缘停靠区域
     const dockResult = detectDockZone(clientX, clientY);
     hoveredZone.value = dockResult;
   }
@@ -265,7 +317,7 @@ export function useDockManager(config?: DockManagerConfig) {
         mergeTab(groupId, tabId, hoveredGroupId, insertIndex);
       }
     } else if (sourceGroup.tabs.length > 1) {
-      // 情况2: 拆分成新面板组
+      // 情况2: 拆分成新面板组（只有多个tab时才能拆分）
       const dockResult = detectDockZone(tabDragInfo.value.currentX, tabDragInfo.value.currentY);
       if (dockResult) {
         splitTabAndDock(groupId, tabId, dockResult.position);
@@ -307,6 +359,25 @@ export function useDockManager(config?: DockManagerConfig) {
     }
   }
 
+  // 合并面板组（将源组的所有标签合并到目标组）
+  function mergeGroup(sourceGroupId: string, targetGroupId: string) {
+    const sourceGroup = panelGroups.value.get(sourceGroupId);
+    const targetGroup = panelGroups.value.get(targetGroupId);
+
+    if (!sourceGroup || !targetGroup || sourceGroupId === targetGroupId) return;
+
+    // 将源组的所有标签添加到目标组末尾
+    targetGroup.tabs.push(...sourceGroup.tabs);
+
+    // 激活源组的当前激活标签
+    if (sourceGroup.activeTabId) {
+      targetGroup.activeTabId = sourceGroup.activeTabId;
+    }
+
+    // 删除源组
+    removePanelGroup(sourceGroupId);
+  }
+
   // 重新排序标签
   function reorderTab(groupId: string, tabId: string, newIndex: number) {
     const group = panelGroups.value.get(groupId);
@@ -331,12 +402,18 @@ export function useDockManager(config?: DockManagerConfig) {
     const tab = sourceGroup.tabs[tabIndex];
     sourceGroup.tabs.splice(tabIndex, 1);
 
+    // 使用源组的原始宽高
+    const width = sourceGroup.originalWidth;
+    const height = sourceGroup.originalHeight;
+
     const newGroup: PanelGroup = {
       id: `group-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
       tabs: [tab],
       activeTabId: tab.id,
-      width: sourceGroup.width,
-      height: sourceGroup.height,
+      width,
+      height,
+      originalWidth: width,
+      originalHeight: height,
       x: x - 100,
       y: y - 20,
       zIndex: ++maxZIndex.value,
@@ -363,12 +440,18 @@ export function useDockManager(config?: DockManagerConfig) {
     const tab = sourceGroup.tabs[tabIndex];
     sourceGroup.tabs.splice(tabIndex, 1);
 
+    // 使用源组的原始宽高
+    const width = sourceGroup.originalWidth;
+    const height = sourceGroup.originalHeight;
+
     const newGroup: PanelGroup = {
       id: `group-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
       tabs: [tab],
       activeTabId: tab.id,
-      width: sourceGroup.width,
-      height: sourceGroup.height,
+      width,
+      height,
+      originalWidth: width,
+      originalHeight: height,
       x: 0,
       y: 0,
       zIndex: ++maxZIndex.value,
@@ -415,6 +498,12 @@ export function useDockManager(config?: DockManagerConfig) {
 
     group.width = Math.max(width, minPanelWidth);
     group.height = Math.max(height, minPanelHeight);
+
+    // 如果是浮动状态，同时更新原始宽高
+    if (group.state === 'floating' || group.state === 'dragging') {
+      group.originalWidth = group.width;
+      group.originalHeight = group.height;
+    }
   }
 
   // 检测停靠区域
@@ -452,6 +541,41 @@ export function useDockManager(config?: DockManagerConfig) {
     return null;
   }
 
+  // 检测组悬停（用于组合并）
+  function detectGroupHover(clientX: number, clientY: number) {
+    hoveredGroup.value = null;
+
+    if (!dragInfo.value) return;
+
+    // 按 zIndex 从高到低排序，优先检测最上层的面板
+    const sortedGroups = Array.from(panelGroups.value.entries()).sort(
+      ([, a], [, b]) => b.zIndex - a.zIndex
+    );
+
+    const tabsHeaderHeight = 36;
+
+    for (const [id] of sortedGroups) {
+      // 不检测自己
+      if (id === dragInfo.value.groupId) continue;
+
+      const element = document.querySelector(`[data-panel-group-id="${id}"]`);
+      if (!element) continue;
+
+      const rect = element.getBoundingClientRect();
+
+      // 检测是否悬停在标签栏区域
+      if (
+        clientX >= rect.left &&
+        clientX <= rect.right &&
+        clientY >= rect.top &&
+        clientY <= rect.top + tabsHeaderHeight
+      ) {
+        hoveredGroup.value = id;
+        break;
+      }
+    }
+  }
+
   // 检测标签悬停
   function detectTabHover(clientX: number, clientY: number) {
     hoveredGroup.value = null;
@@ -459,27 +583,24 @@ export function useDockManager(config?: DockManagerConfig) {
     if (!tabDragInfo.value) return;
 
     // 按 zIndex 从高到低排序，优先检测最上层的面板
-    // const sortedGroups = Array.from(panelGroups.value.entries()).sort(
-    //   ([, a], [, b]) => b.zIndex - a.zIndex
-    // );
+    const sortedGroups = Array.from(panelGroups.value.entries()).sort(
+      ([, a], [, b]) => b.zIndex - a.zIndex
+    );
 
-    console.log(panelGroups.value, 'panelGroups.value')
+    const tabsHeaderHeight = 36;
 
-    for (const [id, group] of panelGroups.value) {
-      // TODO 如果优化如果悬浮在tabs整个窗体中也不触发容器四周的停靠
+    for (const [id, group] of sortedGroups) {
       const element = document.querySelector(`[data-panel-group-id="${id}"]`);
       if (!element) continue;
 
       const rect = element.getBoundingClientRect();
-      // TODO 高度固定？
-      const tabsHeaderHeight = 36;
-      // 如果拖拽tab至整个窗体，则不触发容器泊靠热区
+      
+      // 检测是否悬停在标签栏区域
       if (
         clientX >= rect.left &&
         clientX <= rect.right &&
         clientY >= rect.top &&
         clientY <= rect.top + tabsHeaderHeight
-        // clientY <= rect.bottom
       ) {
         hoveredGroup.value = id;
 

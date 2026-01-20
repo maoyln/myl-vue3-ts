@@ -360,7 +360,20 @@ export const asyncRoutes: RouteRecordRaw[] = [
         path: 'berthing01',
         name: 'Berthing01',
         meta: { title: '泊靠01', icon: 'Document' },
-        component: () => import('@/views/DockingFrame/Berthing01.vue'),
+        children: [
+          {
+            path: 'Berthing01',
+            name: 'Berthing01Page',
+            meta: { title: 'Berthing01' },
+            component: () => import('@/views/DockingFrame/Berthing01.vue'),
+          },
+          {
+            path: 'panelDemo',
+            name: 'panelDemo',
+            meta: { title: 'panelDemo' },
+            component: () => import('@/views/panelDemo/DockingPanel.vue'),
+          },
+        ],
       }
     ],
   },

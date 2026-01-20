@@ -104,7 +104,7 @@
       v-if="showMergeIndicator"
       class="merge-indicator"
     >
-      <span class="merge-indicator-text">拖到这里合并标签页</span>
+      <span class="merge-indicator-text">{{ getMergeIndicatorText() }}</span>
     </div>
   </div>
 </template>
@@ -127,16 +127,46 @@ const tabsContainerRef = ref<HTMLElement | null>(null);
 const dragStartPos = ref({ x: 0, y: 0 });
 const dragThreshold = 5;
 const hasDragged = ref(false);
+const groupDragStartPos = ref({ x: 0, y: 0 });
+const hasGroupDragged = ref(false);
 
 const showMergeIndicator = computed(() => {
+  // 标签拖拽合并指示器（只在多个tab时显示）
   const tabDragInfo = manager.tabDragInfo?.value;
-  if (!tabDragInfo) return false;
-  if (manager.hoveredGroup?.value !== props.group.id) return false;
-  if (tabDragInfo.groupId === props.group.id) return false;
-  const sourceGroup = manager.getPanelGroup(tabDragInfo.groupId);
-  if (sourceGroup && sourceGroup.tabs.length === 1) return false;
-  return true;
+  if (tabDragInfo) {
+    if (manager.hoveredGroup?.value !== props.group.id) return false;
+    if (tabDragInfo.groupId === props.group.id) return false;
+    const sourceGroup = manager.getPanelGroup(tabDragInfo.groupId);
+    // 只有源组有多个tab时才显示tab合并指示器
+    if (sourceGroup && sourceGroup.tabs.length === 1) return false;
+    return true;
+  }
+
+  // 组拖拽合并指示器（单个tab拖拽时会走这里）
+  const groupDragInfo = manager.dragInfo?.value;
+  if (groupDragInfo) {
+    if (manager.hoveredGroup?.value !== props.group.id) return false;
+    if (groupDragInfo.groupId === props.group.id) return false;
+    return true;
+  }
+
+  return false;
 });
+
+function getMergeIndicatorText(): string {
+  const tabDragInfo = manager.tabDragInfo?.value;
+  if (tabDragInfo) {
+    return '拖到这里合并标签页';
+  }
+  const groupDragInfo = manager.dragInfo?.value;
+  if (groupDragInfo) {
+    const sourceGroup = manager.getPanelGroup(groupDragInfo.groupId);
+    if (sourceGroup) {
+      return `拖到这里合并面板组（${sourceGroup.tabs.length} 个标签）`;
+    }
+  }
+  return '拖到这里合并';
+}
 
 function showInsertIndicator(index: number): boolean {
   const tabDragInfo = manager.tabDragInfo?.value;
@@ -181,8 +211,10 @@ const panelStyle = computed(() => {
     if (g.position === 'left' || g.position === 'right') {
       style.width = `${g.width}px`;
       style.height = `${g.height}px`;
+      // style.height = `100%`;
     } else if (g.position === 'top' || g.position === 'bottom') {
-      style.width = `${g.width}px`;
+      // style.width = `${g.width}px`;
+      style.width = `100%`;
       style.height = `${g.height}px`;
     }
 
@@ -210,7 +242,30 @@ function handleTabsMouseDown(e: MouseEvent) {
   }
 
   e.preventDefault();
-  manager.startDragGroup(props.group.id, e.clientX, e.clientY);
+  
+  groupDragStartPos.value = { x: e.clientX, y: e.clientY };
+  hasGroupDragged.value = false;
+
+  const handleMouseMove = (moveEvent: MouseEvent) => {
+    const deltaX = Math.abs(moveEvent.clientX - groupDragStartPos.value.x);
+    const deltaY = Math.abs(moveEvent.clientY - groupDragStartPos.value.y);
+
+    if (deltaX > dragThreshold || deltaY > dragThreshold) {
+      if (!hasGroupDragged.value) {
+        hasGroupDragged.value = true;
+        manager.startDragGroup(props.group.id, moveEvent.clientX, moveEvent.clientY);
+      }
+    }
+  };
+
+  const handleMouseUp = () => {
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+    hasGroupDragged.value = false;
+  };
+
+  document.addEventListener('mousemove', handleMouseMove);
+  document.addEventListener('mouseup', handleMouseUp);
 }
 
 function handleTabMouseDown(e: MouseEvent, tab: TabItem) {
@@ -262,10 +317,20 @@ function handleDetach() {
   const groupElement = document.querySelector(`[data-panel-group-id="${group.id}"]`);
   if (groupElement) {
     const rect = groupElement.getBoundingClientRect();
-    group.x = rect.left;
-    group.y = rect.top;
-    group.width = rect.width;
-    group.height = rect.height;
+    const oldWidth = rect.width;
+    const oldHeight = rect.height;
+    const newWidth = group.originalWidth;
+    const newHeight = group.originalHeight;
+    
+    // 计算面板中心点
+    const centerX = rect.left + oldWidth / 2;
+    const centerY = rect.top + oldHeight / 2;
+    
+    // 根据新的宽高调整位置，保持中心点不变
+    group.x = centerX - newWidth / 2;
+    group.y = centerY - newHeight / 2;
+    group.width = newWidth;
+    group.height = newHeight;
   }
 
   group.state = 'floating';
@@ -609,7 +674,7 @@ function handleResizeEnd() {
   left: 0;
   right: 0;
   height: 36px;
-  border: 3px solid #4A90E2;
+  border: 1px solid #4A90E2;
   border-bottom: none;
   background: linear-gradient(
     to bottom,

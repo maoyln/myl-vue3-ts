@@ -297,15 +297,14 @@ function getPositionName(position: DockPosition): string {
 .info-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 4px;
 }
 
 .info-item {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 12px;
+  padding: 4px;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 6px;
 }

@@ -35,6 +35,8 @@ export interface PanelGroup {
   activeTabId: string; // 当前激活的标签页ID
   width: number; // 面板组宽度
   height: number; // 面板组高度
+  originalWidth: number; // 原始宽度（用于停靠后恢复）
+  originalHeight: number; // 原始高度（用于停靠后恢复）
   x: number; // 面板组x坐标
   y: number; // 面板组y坐标
   zIndex: number; // 面板组层级
