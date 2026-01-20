@@ -28,20 +28,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
 import PanelContainer from './PanelContainer.vue';
-import { mockData } from '../mock'; 
-const dockContainers = ref(mockData.containers);
-const floatPanelGroups = ref(mockData.floatPanelGroups);
+
+const props = defineProps<{
+    dockContainers: any;
+    floatPanelGroups: any;
+}>();
 function handleMouseMove(e: MouseEvent) {
     // 如果有拖拽的内容，这需要实时定位
-    console.log('handleMouseMove', e);
+    // console.log('handleMouseMove', e);
 
 }
 
 function handleMouseUp(e: MouseEvent) {
     // 如果有拖拽的内容，鼠标抬起的时候需要做的事情
-    console.log('handleMouseUp', e);
+    // console.log('handleMouseUp', e);
 }
 </script>
 

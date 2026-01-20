@@ -21,9 +21,10 @@ const layoutDirectionStyle = computed(() => {
 
 .panel-group {
     display: flex;
-    flex-direction: column;
     border: 1px solid blue;
-    margin: 10px;
+    /* margin: 10px; */
+    width: 100%;
+    height: 100%;
 }
 
 </style>
