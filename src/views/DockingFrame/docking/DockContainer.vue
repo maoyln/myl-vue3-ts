@@ -1,34 +1,21 @@
 <template>
-  <div
-    ref="containerRef"
-    class="dock-container"
-    @mouseup="handleMouseUp"
-    @mousemove="handleMouseMove"
-  >
+  <div ref="containerRef" class="dock-container" @mouseup="handleMouseUp" @mousemove="handleMouseMove">
     <!-- Flex 布局容器 -->
     <div class="dock-layout">
-      <!-- 顶部停靠区 -->
-      <div v-if="topGroups.length > 0" class="dock-area dock-top">
-        <DockablePanelGroup
-          v-for="group in topGroups"
-          :key="group.id"
-          :group="group"
-        >
+      <!-- 左侧停靠区 -->
+      <div v-if="leftGroups.length > 0" class="dock-area dock-left">
+        <DockablePanelGroup v-for="group in leftGroups" :key="group.id" :group="group">
           <template #default="{ activeTab }">
             <slot name="panel-group-content" :group="group" :activeTab="activeTab" />
           </template>
         </DockablePanelGroup>
       </div>
 
-      <!-- 中间区域（左-中-右） -->
+      <!-- 中间区域 -->
       <div class="dock-middle">
-        <!-- 左侧停靠区 -->
-        <div v-if="leftGroups.length > 0" class="dock-area dock-left">
-          <DockablePanelGroup
-            v-for="group in leftGroups"
-            :key="group.id"
-            :group="group"
-          >
+        <!-- 顶部停靠区 -->
+        <div v-if="topGroups.length > 0" class="dock-area dock-top">
+          <DockablePanelGroup v-for="group in topGroups" :key="group.id" :group="group">
             <template #default="{ activeTab }">
               <slot name="panel-group-content" :group="group" :activeTab="activeTab" />
             </template>
@@ -36,17 +23,13 @@
         </div>
 
         <!-- 主内容区 -->
-        <div class="dock-content">
+        <div ref="dockContentRef" class="dock-content">
           <slot></slot>
         </div>
 
-        <!-- 右侧停靠区 -->
-        <div v-if="rightGroups.length > 0" class="dock-area dock-right">
-          <DockablePanelGroup
-            v-for="group in rightGroups"
-            :key="group.id"
-            :group="group"
-          >
+        <!-- 底部停靠区 -->
+        <div v-if="bottomGroups.length > 0" class="dock-area dock-bottom">
+          <DockablePanelGroup v-for="group in bottomGroups" :key="group.id" :group="group">
             <template #default="{ activeTab }">
               <slot name="panel-group-content" :group="group" :activeTab="activeTab" />
             </template>
@@ -54,13 +37,9 @@
         </div>
       </div>
 
-      <!-- 底部停靠区 -->
-      <div v-if="bottomGroups.length > 0" class="dock-area dock-bottom">
-        <DockablePanelGroup
-          v-for="group in bottomGroups"
-          :key="group.id"
-          :group="group"
-        >
+      <!-- 右侧停靠区 -->
+      <div v-if="rightGroups.length > 0" class="dock-area dock-right">
+        <DockablePanelGroup v-for="group in rightGroups" :key="group.id" :group="group">
           <template #default="{ activeTab }">
             <slot name="panel-group-content" :group="group" :activeTab="activeTab" />
           </template>
@@ -69,29 +48,18 @@
     </div>
 
     <!-- 浮动面板组 -->
-    <DockablePanelGroup
-      v-for="group in floatingGroups"
-      :key="group.id"
-      :group="group"
-    >
+    <DockablePanelGroup v-for="group in floatingGroups" :key="group.id" :group="group">
       <template #default="{ activeTab }">
         <slot name="panel-group-content" :group="group" :activeTab="activeTab" />
       </template>
     </DockablePanelGroup>
 
     <!-- 热区指示器 -->
-    <div
-      v-if="hoveredZone"
-      class="dock-zone-indicator"
-      :style="getZoneIndicatorStyle(hoveredZone)"
-    ></div>
+    <div v-if="hoveredZone" class="dock-zone-indicator" :style="getZoneIndicatorStyle(hoveredZone)"></div>
 
     <!-- 标签拖拽预览 -->
-    <div
-      v-if="tabDragInfo && draggedTab && draggedGroup && draggedGroup.tabs.length !== 1"
-      class="panel-drag-preview"
-      :style="getPanelPreviewStyle()"
-    >
+    <div v-if="tabDragInfo && draggedTab && draggedGroup && draggedGroup.tabs.length !== 1" class="panel-drag-preview"
+      :style="getPanelPreviewStyle()">
       <div class="preview-tabs-header">
         <div class="preview-tabs-container">
           <div class="preview-tab active">
@@ -128,7 +96,7 @@ const manager = useDockManager(props.config);
 const { panelGroupList, hoveredZone, dragInfo, tabDragInfo } = manager;
 
 const containerRef = ref<HTMLElement | null>(null);
-
+const dockContentRef = ref<HTMLElement | null>(null); // 预留热区容器
 // 按位置分组
 const topGroups = computed(() =>
   panelGroupList.value.filter(g => g.state === 'docked' && g.position === 'top')
@@ -238,35 +206,77 @@ defineExpose({
   overflow: hidden;
 }
 
+/* 主布局容器*/
 .dock-layout {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   width: 100%;
   height: 100%;
+  gap: 0;
 }
 
+/* 中间区域 - 垂直布局 */
 .dock-middle {
   display: flex;
+  flex-direction: column;
   flex: 1;
+  min-width: 0;
   min-height: 0;
 }
 
+/* 停靠区域通用样式 */
 .dock-area {
   display: flex;
   border: 1px solid #E5E6EB;
   overflow: hidden;
+  background: transparent;
 }
 
-.dock-top,
-.dock-bottom {
-  flex-direction: row;
-}
-
+/* 左右停靠区 - 垂直排列面板 */
 .dock-left,
 .dock-right {
   flex-direction: column;
+  min-width: 200px;
+  max-width: 600px;
 }
 
+.dock-left {
+  border-right: 1px solid #E5E6EB;
+  border-left: none;
+  border-top: none;
+  border-bottom: none;
+}
+
+.dock-right {
+  border-left: 1px solid #E5E6EB;
+  border-right: none;
+  border-top: none;
+  border-bottom: none;
+}
+
+/* 上下停靠区 - 水平排列面板 */
+.dock-top,
+.dock-bottom {
+  flex-direction: row;
+  min-height: 150px;
+  max-height: 500px;
+}
+
+.dock-top {
+  border-bottom: 1px solid #E5E6EB;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+
+.dock-bottom {
+  border-top: 1px solid #E5E6EB;
+  border-bottom: none;
+  border-left: none;
+  border-right: none;
+}
+
+/* 主内容区 - 占据剩余空间 */
 .dock-content {
   flex: 1;
   position: relative;
@@ -275,28 +285,35 @@ defineExpose({
   min-height: 0;
 }
 
+/* 热区指示器 - 拖放时的视觉反馈 */
 .dock-zone-indicator {
   position: fixed;
   background-color: rgba(66, 133, 244, 0.3);
-  border-radius: 4px;
+  /* border: 2px solid rgba(66, 133, 244, 0.6); */
+  border-radius: 2px;
   pointer-events: none;
   z-index: 9999;
-  transition: all 0.15s ease-out;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(66, 133, 244, 0.2);
 }
 
+/* 面板拖拽预览 */
 .panel-drag-preview {
   position: fixed;
   display: flex;
   flex-direction: column;
   border: 2px solid #4A90E2;
-  border-radius: 6px;
+  border-radius: 4px;
   pointer-events: none;
   z-index: 10000;
-  /* box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6); */
-  opacity: 0.85;
+  opacity: 0.9;
   overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
+  transition: opacity 0.15s ease-out;
 }
 
+/* 预览标签头 */
 .preview-tabs-header {
   display: flex;
   justify-content: space-between;
@@ -304,23 +321,28 @@ defineExpose({
   background-color: #E5E6EB;
   border-bottom: 1px solid #555;
   min-height: 36px;
+  padding: 0;
 }
 
 .preview-tabs-container {
   display: flex;
   flex: 1;
   padding: 0 4px;
+  overflow: hidden;
 }
 
+/* 预览标签 */
 .preview-tab {
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
   min-width: 120px;
+  max-width: 200px;
   font-size: 13px;
   white-space: nowrap;
   border-bottom: 2px solid #4A90E2;
+  background: transparent;
 }
 
 .preview-tab .tab-icon {
@@ -335,9 +357,11 @@ defineExpose({
   white-space: nowrap;
 }
 
+/* 预览内容 */
 .preview-content {
   flex: 1;
   overflow: hidden;
+  position: relative;
 }
 
 .preview-placeholder {
@@ -345,6 +369,7 @@ defineExpose({
   text-align: center;
   color: #888;
   font-size: 12px;
+  line-height: 1.6;
 }
 
 .preview-placeholder p {
