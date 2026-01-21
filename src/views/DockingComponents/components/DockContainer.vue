@@ -16,7 +16,6 @@
                 </div>
              </div>
              <div class="dock-right">
-                <!-- 右侧停靠区{{dockContainers.right}} -->
                 <PanelContainer :container="dockContainers.right" direction="row" />
              </div>        
         </div>

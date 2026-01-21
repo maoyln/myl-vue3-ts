@@ -3,12 +3,12 @@ export const mockData = {
         left: {
             id: 'container_left',
             position: 'left',
-            width: 200,
-            height: 200,
             groups: [
                 {
                     id: 'group_left_01',
                     direction: 'row',
+                    width: 200,
+                    height: 200,
                     panels: [
                         { id: 'panel_left_01', name: '面板1' },
                         { id: 'panel_left_02', name: '面板2' },
@@ -18,6 +18,8 @@ export const mockData = {
                 {
                     id: 'group_left_02',
                     direction: 'row',
+                    width: 200,
+                    height: 200,
                     panels: [
                         { id: 'panel_left_02', name: '面板2' },
                         { id: 'panel_left_03', name: '面板3' },
@@ -38,12 +40,12 @@ export const mockData = {
         right: {
             id: 'container_right',
             position: 'right',
-            width: 200,
-            height: 200,
             groups: [
                 {
                     id: 'group_right_01',
                     direction: 'row',
+                    width: 200,
+                    height: 200,
                     panels: [
                         { id: 'panel_right_01', name: '面板1' },
                         { id: 'panel_right_02', name: '面板2' },
@@ -52,6 +54,8 @@ export const mockData = {
                 {
                     id: 'group_right_02',
                     direction: 'row',
+                    width: 200,
+                    height: 200,
                     panels: [
                         { id: 'panel_right_02', name: '面板2' },
                         { id: 'panel_right_03', name: '面板3' },
@@ -65,12 +69,12 @@ export const mockData = {
         top: {
             id: 'container_top',
             position: 'top',
-            width: 200,
-            height: 200,
             groups: [
                 {
                     id: 'group_top_01',
                     direction: 'column',
+                    width: 200,
+                    height: 200,
                     panels: [
                         { id: 'panel_top_01', name: '面板1' },
                         { id: 'panel_top_02', name: '面板2' },
@@ -80,6 +84,8 @@ export const mockData = {
                 {
                     id: 'group_top_02',
                     direction: 'column',
+                    width: 200,
+                    height: 200,
                     panels: [
                         { id: 'panel_top_02', name: '面板2' },
                         { id: 'panel_top_03', name: '面板3' },
@@ -93,12 +99,12 @@ export const mockData = {
         bottom: {
             id: 'container_bottom',
             position: 'bottom',
-            width: 200,
-            height: 200,
             groups: [
                 {
                     id: 'group_bottom_01',
                     direction: 'column',
+                    width: 200,
+                    height: 200,
                     panels: [
                         { id: 'panel_bottom_01', name: '面板1' },
                         { id: 'panel_bottom_02', name: '面板2' },
@@ -107,6 +113,8 @@ export const mockData = {
                 {
                     id: 'group_bottom_02',
                     direction: 'column',
+                    width: 200,
+                    height: 200,
                     panels: [
                         { id: 'panel_bottom_02', name: '面板2' },
                         { id: 'panel_bottom_03', name: '面板3' },
@@ -122,14 +130,14 @@ export const mockData = {
         {
             id: 'float_panel_group_01',
             position: 'float',
-            width: 200,
-            height: 200,
             x: 100,
             y: 100,
             groups: [
                 {
                     id: 'group_float_01',
                     direction: 'row',
+                    width: 200,
+                    height: 200,
                     panels: [
                         { id: 'panel_float_01', name: '面板1' },
                     ],
@@ -139,14 +147,14 @@ export const mockData = {
         {
             id: 'float_panel_group_02',
             position: 'float',
-            width: 200,
-            height: 200,
             x: 100,
             y: 100,
             groups: [
                 {
                     id: 'group_float_02',
                     direction: 'row',
+                    width: 200,
+                    height: 200,
                     panels: [
                         { id: 'panel_float_01', name: '面板1' },
                         { id: 'panel_float_02', name: '面板2' },
