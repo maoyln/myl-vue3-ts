@@ -29,24 +29,26 @@
         </div>
 
         <!-- 多个容器（浮动窗体）-->
-        <div v-else class="dock-layout-item" :style="layoutDirectionStyle">
-            <div v-for="item in container" :key="item.id" class="float-item">
+        <div v-else class="dock-layout-float">
+            <div 
+                v-for="item in container" 
+                :key="item.id" 
+                class="float-item"
+                :style="getFloatItemStyle(item)"
+            >
                 <!-- 动态渲染 PanelGroup 和热区 -->
                 <template v-for="(group, index) in item.groups" :key="group.id">
                     <!-- 第一个 PanelGroup 前的热区 -->
-                     <!-- v-show="index === 0 && shouldShowDropZone" -->
                     <div 
                         v-show="index === 0 && shouldShowDropZone"
                         class="drop-zone-container"
                         :class="{ 'active': activePosition === `${item.id}-before-${index}` }"
                         :data-drop-zone="`${item.id}-before-${index}`"
                     ></div>
-
                     <!-- PanelGroup 组件 -->
                     <PanelGroup :group="group" :direction="direction" />
 
                     <!-- 每个 PanelGroup 后的热区 -->
-                     <!-- v-show="shouldShowDropZone" -->
                     <div 
                         v-show="shouldShowDropZone"
                         class="drop-zone-container"
@@ -72,6 +74,28 @@ const props = defineProps<{
 const layoutDirectionStyle = computed(() => {
     return props.direction === 'row' ? 'flex-direction: row;' : 'flex-direction: column;';
 });
+
+// 计算浮动窗体的样式
+const getFloatItemStyle = (item: any) => {
+    const styles: any = {
+        position: 'absolute',
+        left: `${item.x || 0}px`,
+        top: `${item.y || 0}px`,
+    };
+    
+    // 如果有 groups，使用第一个 group 的宽高
+    if (item.groups && item.groups.length > 0) {
+        const firstGroup = item.groups[0];
+        if (firstGroup.width) {
+            styles.width = `${firstGroup.width}px`;
+        }
+        if (firstGroup.height) {
+            styles.height = `${firstGroup.height}px`;
+        }
+    }
+    
+    return styles;
+};
 
 // 容器引用
 const containerRef = ref<HTMLElement | null>(null);
@@ -148,9 +172,22 @@ watch([() => props.container, allowedPositions], () => {
     width: 100%;
 }
 
+/* 浮动窗体容器 */
+.dock-layout-float {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+/* 单个浮动窗体 */
 .float-item {
     display: flex;
     flex-direction: inherit;
+    position: absolute;
+    border: 1px solid #333;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
 }
 
 /* 热区基础样式 - PanelGroup 之间的插入热区 */

@@ -1,6 +1,8 @@
 <template>
     <div class="docking-components">
-        <DockContainer :dockContainers="dockContainers" :floatPanelGroups="floatPanelGroups" />
+        <DockContainer :dockContainers="dockContainers" :floatPanelGroups="floatPanelGroups" >
+            主内容区域
+        </DockContainer>
     </div>
 </template>
 

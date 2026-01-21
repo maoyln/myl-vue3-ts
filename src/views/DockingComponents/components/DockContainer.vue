@@ -10,7 +10,9 @@
                 <div class="dock-top">
                     <PanelContainer :container="dockContainers.top" direction="column" />
                 </div>
-                <div class="dock-content">主内容区</div>
+                <div class="dock-content">
+                    <slot></slot>
+                </div>
                 <div class="dock-bottom">
                     <PanelContainer :container="dockContainers.bottom" direction="column" />
                 </div>
@@ -21,7 +23,7 @@
         </div>
 
         <div class="dock-float">
-            <PanelContainer :container="floatPanelGroups" direction="row" />
+            <PanelContainer :container="floatPanelGroups" direction="column" />
         </div>
     </div>
 </template>
@@ -60,13 +62,16 @@ function handleMouseUp(e: MouseEvent) {
 
 .dock-float {
     position: absolute;
-    top: calc(100% - 400px);
-    left: calc(100% - 400px);
-    width: 300px;
-    height: 300px;
-    z-index: 999;
-    border: 1px solid blue;
-    background-color: yellow;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    pointer-events: none; /* 允许点击穿透到下层 */
+}
+
+.dock-float :deep(.float-item) {
+    pointer-events: auto; /* 浮动窗体本身可以响应点击 */
 }
 
 .dock-left {

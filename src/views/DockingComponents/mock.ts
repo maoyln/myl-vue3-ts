@@ -47,7 +47,12 @@ export const mockData = {
                     width: 200,
                     height: 200,
                     panels: [
-                        { id: 'panel_right_01', name: '面板-right11' },
+                        { id: 'panel_right_01', name: '面板-right11', 
+                            tabs: [
+                                { id: 'tab_right_01', title: '面板-right11-标签1', component: 'PanelRight01' },
+                                { id: 'tab_right_02', title: '面板-right12-标签2', component: 'PanelRight02' }
+                            ] 
+                        },
                         { id: 'panel_right_02', name: '面板-right12' },
                     ],
                 },
@@ -110,6 +115,7 @@ export const mockData = {
                         { id: 'panel_bottom_02', name: '面板-bot12' },
                     ],
                 },
+                
                 {
                     id: 'group_bottom_02',
                     direction: 'column',
@@ -131,16 +137,16 @@ export const mockData = {
         {
             id: 'float_panel_group_01',
             position: 'float',
-            x: 100,
-            y: 100,
+            x: 10,
+            y: 10,
             groups: [
                 {
                     id: 'group_float_01',
-                    direction: 'row',
+                    direction: 'column',
                     width: 200,
                     height: 200,
                     panels: [
-                        { id: 'panel_float_01', name: '面板-float11' },
+                        { id: 'panel_float_11', name: '浮动窗体1-面板1' },
                     ],
                 },
             ],
@@ -148,17 +154,17 @@ export const mockData = {
         {
             id: 'float_panel_group_02',
             position: 'float',
-            x: 100,
-            y: 100,
+            x: 1000,
+            y: 650,
             groups: [
                 {
                     id: 'group_float_02',
-                    direction: 'row',
-                    width: 200,
-                    height: 200,
+                    direction: 'column',
+                    width: 400,
+                    height: 250,
                     panels: [
-                        { id: 'panel_float_01', name: '面板-float21' },
-                        { id: 'panel_float_02', name: '面板-float22' },
+                        { id: 'panel_float_21', name: '浮动窗体2-面板1' },
+                        { id: 'panel_float_22', name: '浮动窗体2-面板2' },
                     ],
                 },
             ],
