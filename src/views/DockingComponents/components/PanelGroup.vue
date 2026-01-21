@@ -10,7 +10,7 @@
             <!-- 第一个 Panel 前的热区 -->
             <!-- v-show="index === 0 && shouldShowDropZone" -->
             <div 
-                v-show="index === 0 && shouldShowDropZone"
+                v-show="index === 0"
                 class="drop-zone"
                 :class="{ 'active': activePosition === `before-${index}` }"
                 :data-drop-zone="`before-${index}`"
@@ -22,7 +22,6 @@
             <!-- 每个 Panel 后的热区（也是下一个 Panel 之间的热区）-->
              <!-- v-show="shouldShowDropZone" -->
             <div 
-                v-show="shouldShowDropZone"
                 class="drop-zone"
                 :class="{ 'active': activePosition === `after-${index}` }"
                 :data-drop-zone="`after-${index}`"
@@ -35,6 +34,8 @@
 import Panel from './Panel.vue';
 import { computed, ref, watch, nextTick } from 'vue';
 import { useDropZone } from '../useDropZone';
+import { useDragDrop } from '../useDragDrop';
+import { useDragContext } from '../useDragContext';
 
 const props = defineProps<{
     direction: 'row' | 'column';
@@ -47,6 +48,10 @@ const layoutDirectionStyle = computed(() => {
 
 // PanelGroup 引用
 const panelGroupRef = ref<HTMLElement | null>(null);
+
+// 使用拖拽处理 hooks
+const dragDrop = useDragDrop();
+const dragContext = useDragContext();
 
 // 动态生成允许的热区位置
 const allowedPositions = computed(() => {
@@ -62,34 +67,38 @@ const allowedPositions = computed(() => {
     return positions;
 });
 
-// 使用热区 hooks
 const dropZone = useDropZone(panelGroupRef, {
     type: 'panelGroup',
     id: props.group.id,
     data: props.group,
-    allowedPositions: allowedPositions.value as any,
-    dropZoneClass: 'drop-zone', // 指定热区 class，避免查找到其他层级的热区
-    onEnter: (position, dragInfo) => {
-        console.log('进入 Panel 之间热区', position, dragInfo);
+    allowedPositions: allowedPositions as any,
+    dropZoneClass: 'drop-zone',
+    onEnter: (position) => {
+        dragDrop.registerDropZone({
+            scenario: 'panelGroup',
+            position,
+            targetId: props.group.id,
+            targetData: props.group,
+        });
     },
-    onLeave: (position) => {
-        console.log('离开 Panel 之间热区', position);
+    onLeave: () => {
+        // 只有在拖拽未结束时才清除，避免在释放时清除
+        if (dragContext.getCurrentDrag().value) {
+            dragDrop.clearDropZone();
+        }
     },
-    onDrop: (position, dragInfo) => {
-        console.log(' Panel 插入到', props.group.id, position, dragInfo);
-        // TODO: 解析 position (如 'after-2') 确定插入位置，调用 store 重新排列
-        // 例如：after-2 表示插入到 index=2 的 panel 后面，即 newIndex=3
-    }
 });
 
 const { shouldShowDropZone, activePosition } = dropZone;
 
-// 监听 panels 变化或 allowedPositions 变化，重新初始化热区
-watch([() => props.group.panels, allowedPositions], () => {
-    console.log(' PanelGroup panels 或 allowedPositions 变化，重新初始化');
-    nextTick(() => {
-        dropZone.initDropZones();
-    });
+// 监听 panels 变化，确保热区在数据更新后重新初始化
+watch(() => props.group.panels, () => {
+    // 只在拖拽时重新初始化，避免不必要的性能开销
+    if (dragContext.getCurrentDrag().value) {
+        nextTick(() => {
+            dropZone.initDropZones();
+        });
+    }
 }, { deep: true });
 </script>
 

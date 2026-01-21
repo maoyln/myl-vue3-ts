@@ -50,6 +50,10 @@ export function useDrag(targetRef: Ref<HTMLElement | null>, options: UseDragOpti
     let startMouseY = 0;
     let startElementX = 0;
     let startElementY = 0;
+    // 是否真正开始了拖拽（移动超过阈值）
+    let hasStartedDrag = false;
+    // 拖拽阈值（像素），超过这个距离才认为是拖拽
+    const DRAG_THRESHOLD = 5;
 
     /**
      * 鼠标按下事件处理
@@ -62,7 +66,8 @@ export function useDrag(targetRef: Ref<HTMLElement | null>, options: UseDragOpti
         e.preventDefault();
         e.stopPropagation();
 
-        isDragging.value = true;
+        isDragging.value = false; // 初始为 false，只有移动超过阈值才设为 true
+        hasStartedDrag = false;
         
         // 记录鼠标按下时的位置
         startMouseX = e.clientX;
@@ -77,11 +82,7 @@ export function useDrag(targetRef: Ref<HTMLElement | null>, options: UseDragOpti
             targetRef.value.style.willChange = 'transform';
         }
 
-        // 通知全局拖拽上下文
-        dragContext.startDrag({ id, type, data });
-
-        // 触发拖拽开始回调
-        onDragStart?.({ x: currentX, y: currentY });
+        // 不在这里调用 startDrag，等移动超过阈值后再调用
 
         // 添加全局监听
         document.addEventListener('mousemove', handleMouseMove, { passive: false });
@@ -92,13 +93,33 @@ export function useDrag(targetRef: Ref<HTMLElement | null>, options: UseDragOpti
      * 鼠标移动事件处理（高性能版本）
      */
     const handleMouseMove = (e: MouseEvent) => {
-        if (!isDragging.value || !targetRef.value) return;
+        if (!targetRef.value) return;
+
+        // 计算移动距离
+        const deltaX = e.clientX - startMouseX;
+        const deltaY = e.clientY - startMouseY;
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+        // 如果移动距离超过阈值，才开始拖拽
+        if (!hasStartedDrag && distance > DRAG_THRESHOLD) {
+            hasStartedDrag = true;
+            isDragging.value = true;
+
+            // 通知全局拖拽上下文（只有真正拖拽时才调用）
+            dragContext.startDrag({ id, type, data });
+
+            // 触发拖拽开始回调
+            onDragStart?.({ x: currentX, y: currentY });
+        }
+
+        // 只有真正开始拖拽后才处理移动
+        if (!hasStartedDrag) return;
 
         e.preventDefault();
 
         // 计算新位置（直接使用普通变量，不触发响应式）
-        currentX = startElementX + (e.clientX - startMouseX);
-        currentY = startElementY + (e.clientY - startMouseY);
+        currentX = startElementX + deltaX;
+        currentY = startElementY + deltaY;
 
         // 直接操作 DOM，最高性能
         targetRef.value.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
@@ -115,27 +136,38 @@ export function useDrag(targetRef: Ref<HTMLElement | null>, options: UseDragOpti
      * 鼠标松开事件处理
      */
     const handleMouseUp = () => {
-        if (!isDragging.value) return;
-
-        isDragging.value = false;
-
-        // 移除 will-change
-        if (targetRef.value) {
-            targetRef.value.style.willChange = 'auto';
-        }
-
         // 移除全局监听
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
 
-        // 通知全局拖拽上下文结束
-        dragContext.endDrag();
+        // 只有真正开始过拖拽才处理结束逻辑
+        if (hasStartedDrag) {
+            isDragging.value = false;
 
-        // 更新最终位置
-        position.value = { x: currentX, y: currentY };
+            // 移除 will-change
+            if (targetRef.value) {
+                targetRef.value.style.willChange = 'auto';
+            }
 
-        // 触发拖拽结束回调
-        onDragEnd?.({ x: currentX, y: currentY });
+            // 通知全局拖拽上下文结束（只有真正拖拽过才调用）
+            dragContext.endDrag();
+
+            // 重置 transform，让元素回到原位置（数据更新后会重新渲染）
+            if (targetRef.value) {
+                targetRef.value.style.transform = 'translate3d(0px, 0px, 0)';
+            }
+
+            // 重置位置变量
+            currentX = 0;
+            currentY = 0;
+            position.value = { x: 0, y: 0 };
+
+            // 触发拖拽结束回调
+            onDragEnd?.({ x: 0, y: 0 });
+        }
+
+        // 重置拖拽状态
+        hasStartedDrag = false;
     };
 
     /**

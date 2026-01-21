@@ -17,6 +17,8 @@ const floatPanelGroups = computed(() => dockStore.floatPanelGroups);
 onMounted(() => {
     console.log(dockContainers.value);
     console.log(floatPanelGroups.value);
+    (window as any).dockContainers = dockContainers.value;
+    (window as any).floatPanelGroups = floatPanelGroups.value;
 });
 
 </script>

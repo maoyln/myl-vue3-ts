@@ -1,5 +1,5 @@
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
-import type { Ref } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, nextTick, unref } from 'vue';
+import type { Ref, MaybeRef } from 'vue';
 import { useDragContext } from './useDragContext';
 
 /** 热区位置类型 */
@@ -13,8 +13,8 @@ export interface DropZoneOptions {
     id: string;
     /** 元素数据 */
     data?: any;
-    /** 允许的热区位置 */
-    allowedPositions?: DropPosition[];
+    /** 允许的热区位置（支持响应式） */
+    allowedPositions?: MaybeRef<DropPosition[]>;
     /** 热区 CSS class 名称（用于精确查找） */
     dropZoneClass?: string;
     /** 进入热区回调 */
@@ -36,7 +36,7 @@ export function useDropZone(
         type,
         id,
         data,
-        allowedPositions = ['before', 'after'],
+        allowedPositions: allowedPositionsOption = ['before', 'after'],
         dropZoneClass = 'drop-zone',
         onEnter,
         onLeave,
@@ -61,11 +61,15 @@ export function useDropZone(
         leave: (e: MouseEvent) => void;
     }>();
 
+    // 获取当前允许的位置（支持响应式）
+    const getAllowedPositions = () => {
+        return unref(allowedPositionsOption);
+    };
+
     /**
      * 热区进入事件处理
      */
     const handleZoneEnter = (position: DropPosition) => {
-        console.log('handleZoneEnter', position);
         const currentDrag = dragContext.getCurrentDrag().value;
         if (!currentDrag || currentDrag.id === id) return;
 
@@ -75,8 +79,6 @@ export function useDropZone(
             }
             activePosition.value = position;
             onEnter?.(position, currentDrag);
-            
-            console.log(`进入热区 [${type}:${id}] 位置: ${position}`);
         }
     };
 
@@ -84,13 +86,9 @@ export function useDropZone(
      * 热区离开事件处理
      */
     const handleZoneLeave = (position: DropPosition) => {
-        console.log('handleZoneLeave', position);
-
         if (activePosition.value === position) {
             onLeave?.(position);
             activePosition.value = null;
-            
-            console.log(`离开热区 [${type}:${id}] 位置: ${position}`);
         }
     };
 
@@ -140,12 +138,13 @@ export function useDropZone(
     const initDropZones = () => {
         if (!containerRef.value) return;
         
-        console.log(`[${type}:${id}]  初始化热区`, allowedPositions);
-        
         // 先清理已注册的热区，避免重复注册
         dropZoneElements.forEach((_, position) => {
             unregisterDropZone(position);
         });
+        
+        // 获取当前允许的位置（支持响应式更新）
+        const allowedPositions = getAllowedPositions();
         
         // 使用 class + data-drop-zone 精确查找，避免查找到嵌套组件的热区
         allowedPositions.forEach(position => {
@@ -155,7 +154,6 @@ export function useDropZone(
             ) as NodeListOf<HTMLElement>;
             
             if (!allElements || allElements.length === 0) {
-                console.warn(`[${type}:${id}] 未找到热区: ${position}`);
                 return;
             }
             
@@ -180,12 +178,9 @@ export function useDropZone(
             });
             
             if (closestElement) {
-                console.log(`[${type}:${id}]  注册热区: ${position}，深度: ${minDepth}`);
                 registerDropZone(position, closestElement);
             }
         });
-        
-        console.log(`[${type}:${id}]  已注册热区数量: ${dropZoneElements.size}`);
     };
 
     /**
@@ -196,7 +191,6 @@ export function useDropZone(
             const currentDrag = dragContext.getCurrentDrag().value;
             if (currentDrag) {
                 onDrop?.(activePosition.value, currentDrag);
-                console.log(`放置到 [${type}:${id}] 位置: ${activePosition.value}`, currentDrag);
             }
             activePosition.value = null;
         }
@@ -214,31 +208,46 @@ export function useDropZone(
 
     // 组件挂载时初始化
     onMounted(() => {
-        // 延迟初始化，确保 DOM 已渲染
-        setTimeout(initDropZones, 0);
+        // 使用 requestAnimationFrame 确保在浏览器下一次重绘前执行
+        requestAnimationFrame(() => {
+            initDropZones();
+        });
         
         // 注册放置处理器到全局上下文
         dragContext.registerDropHandler(id, handleDrop);
     });
 
     // 监听拖拽状态，动态初始化热区
-    watch(() => dragContext.getCurrentDrag().value, (drag) => {
+    watch(() => dragContext.getCurrentDrag().value, (drag, prevDrag) => {
         if (drag && drag.id !== id) {
             // 拖拽开始且不是自己被拖拽，等待 DOM 更新后初始化热区
             nextTick(() => {
-                console.log(`[${type}:${id}] 拖拽开始，重新初始化热区`);
                 initDropZones();
             });
-        } else if (!drag) {
-            // 拖拽结束，清理热区
-            console.log(`[${type}:${id}] 拖拽结束，清理热区`);
-            dropZoneElements.forEach((_, position) => {
-                unregisterDropZone(position);
+        } else if (!drag && prevDrag) {
+            // 拖拽结束，使用 requestAnimationFrame 等待 DOM 渲染完成后再重新初始化
+            // 双重 requestAnimationFrame 确保在浏览器完成重绘后执行
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    initDropZones();
+                });
             });
             // 重置状态
             reset();
         }
     });
+
+    // 监听 allowedPositions 变化，自动重新初始化热区（性能优化：只在拖拽时或数据变化时）
+    if (typeof allowedPositionsOption === 'object' && 'value' in allowedPositionsOption) {
+        watch(() => getAllowedPositions(), () => {
+            // 只在有拖拽活动时重新初始化，避免不必要的性能开销
+            if (dragContext.getCurrentDrag().value) {
+                nextTick(() => {
+                    initDropZones();
+                });
+            }
+        }, { deep: true });
+    }
 
     // 组件卸载时清理
     onUnmounted(() => {

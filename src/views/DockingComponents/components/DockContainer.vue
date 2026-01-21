@@ -4,26 +4,26 @@
         <div class="dock-layout">
             <!-- 布局容器 -->
              <div class="dock-left">
-                <PanelContainer :container="dockContainers.left" direction="row" />
+                <PanelContainer :container="dockContainers.left" direction="row" containerKey="left" />
              </div>
              <div class="dock-middle">
                 <div class="dock-top">
-                    <PanelContainer :container="dockContainers.top" direction="column" />
+                    <PanelContainer :container="dockContainers.top" direction="column" containerKey="top" />
                 </div>
                 <div class="dock-content">
                     <slot></slot>
                 </div>
                 <div class="dock-bottom">
-                    <PanelContainer :container="dockContainers.bottom" direction="column" />
+                    <PanelContainer :container="dockContainers.bottom" direction="column" containerKey="bottom" />
                 </div>
              </div>
              <div class="dock-right">
-                <PanelContainer :container="dockContainers.right" direction="row" />
+                <PanelContainer :container="dockContainers.right" direction="row" containerKey="right" />
              </div>        
         </div>
 
         <div class="dock-float">
-            <PanelContainer :container="floatPanelGroups" direction="column" />
+            <PanelContainer :container="floatPanelGroups" direction="column" containerKey="float" />
         </div>
     </div>
 </template>
