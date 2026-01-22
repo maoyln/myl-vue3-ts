@@ -1,7 +1,6 @@
 import { useDockStore } from './useDockStore';
 import { useDragContext } from './useDragContext';
 import type { DropPosition } from './useDropZone';
-import type { DragInfo } from './useDragContext';
 
 export type DropScenario = 'panelGroup' | 'panelContainer' | 'emptySpace';
 
@@ -53,24 +52,25 @@ class DragDropHandler {
     this.dropHandled = true;
     const panelId = prevDrag.id;
 
-    // 场景1或2：有激活的热区，执行热区放置
+    // 有激活的热区，执行热区放置
     if (this.activeDropZone) {
       const { scenario, position, targetId, targetData } = this.activeDropZone;
 
       if (scenario === 'panelGroup') {
-        // 场景1：移动到 PanelGroup 的指定位置
+        // 移动到 PanelGroup 的指定位置
         const { insertIndex } = this.parsePosition(position as string);
         this.store.movePanelToGroup(panelId, targetId, insertIndex);
       } else if (scenario === 'panelContainer') {
-        // 场景2：在 Container 中创建新 Group
+        // 在 Container 中创建新 Group
         const containerKey = targetData?.containerKey || 'left';
         const direction = targetData?.direction || 'column';
         const { insertIndex } = this.parsePosition(position as string);
         this.store.createGroupInContainer(panelId, containerKey, insertIndex, direction);
       }
     } 
-    // 场景3：没有激活的热区，创建浮动窗口
+    // 没有激活的热区，创建浮动窗口
     else if (this.dropPosition) {
+      console.log(this.dropPosition, 'this.dropPosition')
       this.store.createFloatWindow(panelId, this.dropPosition.x, this.dropPosition.y);
     }
 

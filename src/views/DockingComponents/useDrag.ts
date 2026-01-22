@@ -1,7 +1,6 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import type { Ref } from 'vue';
 import { useDragContext } from './useDragContext';
-import type { DragInfo } from './useDragContext';
 
 interface Position {
     x: number;
@@ -63,11 +62,11 @@ export function useDrag(targetRef: Ref<HTMLElement | null>, options: UseDragOpti
         const isEnabled = typeof enabled === 'boolean' ? enabled : enabled.value;
         if (!isEnabled || !targetRef.value) return;
 
-        e.preventDefault();
-        e.stopPropagation();
+        e.preventDefault(); // 阻止默认行为（如页面滚动）
+        e.stopPropagation(); // 阻止事件冒泡
 
         isDragging.value = false; // 初始为 false，只有移动超过阈值才设为 true
-        hasStartedDrag = false;
+        hasStartedDrag = false; // 是否真正开始了拖拽（移动超过阈值）
         
         // 记录鼠标按下时的位置
         startMouseX = e.clientX;
@@ -82,15 +81,13 @@ export function useDrag(targetRef: Ref<HTMLElement | null>, options: UseDragOpti
             targetRef.value.style.willChange = 'transform';
         }
 
-        // 不在这里调用 startDrag，等移动超过阈值后再调用
-
         // 添加全局监听
         document.addEventListener('mousemove', handleMouseMove, { passive: false });
         document.addEventListener('mouseup', handleMouseUp);
     };
 
     /**
-     * 鼠标移动事件处理（高性能版本）
+     * 鼠标移动事件处理
      */
     const handleMouseMove = (e: MouseEvent) => {
         if (!targetRef.value) return;
@@ -121,14 +118,14 @@ export function useDrag(targetRef: Ref<HTMLElement | null>, options: UseDragOpti
         currentX = startElementX + deltaX;
         currentY = startElementY + deltaY;
 
-        // 直接操作 DOM，最高性能
+        // 直接操作 DOM，性能优化
         targetRef.value.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
 
         // 只在需要时更新响应式数据（用于显示）
         position.value.x = currentX;
         position.value.y = currentY;
 
-        // 触发拖拽中回调（可选）
+        // 触发拖拽中回调
         onDragging?.({ x: currentX, y: currentY });
     };
 
@@ -140,7 +137,7 @@ export function useDrag(targetRef: Ref<HTMLElement | null>, options: UseDragOpti
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
 
-        // 只有真正开始过拖拽才处理结束逻辑
+        // 只有开始过拖拽才处理结束逻辑
         if (hasStartedDrag) {
             isDragging.value = false;
 

@@ -53,11 +53,9 @@ const { position, isDragging } = useDrag(panelRef, {
 
 <style scoped>
 .panel {
-    width: 40px;
-    height: 80px;
+    width: 100%;
+    height: 100%;
     border: 1px solid #ccc;
-    margin: 10px;
-    padding: 10px;
     background: #fff;
     cursor: move;
     user-select: none;

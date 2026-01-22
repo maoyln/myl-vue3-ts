@@ -15,26 +15,26 @@ export const mockData = {
                         { id: 'panel_left_13', name: '面板-left13' },
                     ],
                 },
-                {
-                    id: 'group_left_02',
-                    direction: 'row',
-                    width: 200,
-                    height: 200,
-                    panels: [
-                        { id: 'panel_left_21', name: '面板-left21' },
-                        { id: 'panel_left_22', name: '面板-left22' },
-                    ],
-                },
-                {
-                    id: 'group_left_03',
-                    direction: 'row',
-                    panels: [
-                        { id: 'panel_left_31', name: '面板-left31' },
-                        { id: 'panel_left_32', name: '面板-left32' },
-                        { id: 'panel_left_33', name: '面板-left33' },
-                        { id: 'panel_left_34', name: '面板-left34' },
-                    ],
-                },
+                // {
+                //     id: 'group_left_02',
+                //     direction: 'row',
+                //     width: 200,
+                //     height: 200,
+                //     panels: [
+                //         { id: 'panel_left_21', name: '面板-left21' },
+                //         { id: 'panel_left_22', name: '面板-left22' },
+                //     ],
+                // },
+                // {
+                //     id: 'group_left_03',
+                //     direction: 'row',
+                //     panels: [
+                //         { id: 'panel_left_31', name: '面板-left31' },
+                //         { id: 'panel_left_32', name: '面板-left32' },
+                //         { id: 'panel_left_33', name: '面板-left33' },
+                //         { id: 'panel_left_34', name: '面板-left34' },
+                //     ],
+                // },
             ],
         },
         right: {
@@ -86,19 +86,19 @@ export const mockData = {
                         { id: 'panel_top_13', name: '面板-top13' },
                     ],
                 },
-                {
-                    id: 'group_top_02',
-                    direction: 'column',
-                    width: 200,
-                    height: 200,
-                    panels: [
-                        { id: 'panel_top_21', name: '面板-top21' },
-                        { id: 'panel_top_22', name: '面板-top22' },
-                        { id: 'panel_top_23', name: '面板-top23' },
-                        { id: 'panel_top_24', name: '面板-top24' },
-                        { id: 'panel_top_25', name: '面板-top25' },
-                    ],
-                },
+                // {
+                //     id: 'group_top_02',
+                //     direction: 'column',
+                //     width: 200,
+                //     height: 200,
+                //     panels: [
+                //         { id: 'panel_top_21', name: '面板-top21' },
+                //         { id: 'panel_top_22', name: '面板-top22' },
+                //         { id: 'panel_top_23', name: '面板-top23' },
+                //         { id: 'panel_top_24', name: '面板-top24' },
+                //         { id: 'panel_top_25', name: '面板-top25' },
+                //     ],
+                // },
             ],
         },
         bottom: {
@@ -134,41 +134,41 @@ export const mockData = {
         
 
     floatPanelGroups: [
-        {
-            id: 'float_panel_group_01',
-            position: 'float',
-            x: 10,
-            y: 10,
-            groups: [
-                {
-                    id: 'group_float_01',
-                    direction: 'column',
-                    width: 200,
-                    height: 200,
-                    panels: [
-                        { id: 'panel_float_11', name: '浮动窗体1-面板1' },
-                    ],
-                },
-            ],
-        },
-        {
-            id: 'float_panel_group_02',
-            position: 'float',
-            x: 1000,
-            y: 650,
-            groups: [
-                {
-                    id: 'group_float_02',
-                    direction: 'column',
-                    width: 400,
-                    height: 250,
-                    panels: [
-                        { id: 'panel_float_21', name: '浮动窗体2-面板1' },
-                        { id: 'panel_float_22', name: '浮动窗体2-面板2' },
-                    ],
-                },
-            ],
-        },
+        // {
+        //     id: 'float_panel_group_01',
+        //     position: 'float',
+        //     x: 10,
+        //     y: 10,
+        //     groups: [
+        //         {
+        //             id: 'group_float_01',
+        //             direction: 'column',
+        //             width: 200,
+        //             height: 200,
+        //             panels: [
+        //                 { id: 'panel_float_11', name: '浮动窗体1-面板1' },
+        //             ],
+        //         },
+        //     ],
+        // },
+        // {
+        //     id: 'float_panel_group_02',
+        //     position: 'float',
+        //     x: 1000,
+        //     y: 650,
+        //     groups: [
+        //         {
+        //             id: 'group_float_02',
+        //             direction: 'column',
+        //             width: 400,
+        //             height: 250,
+        //             panels: [
+        //                 { id: 'panel_float_21', name: '浮动窗体2-面板1' },
+        //                 { id: 'panel_float_22', name: '浮动窗体2-面板2' },
+        //             ],
+        //         },
+        //     ],
+        // },
     ],
 
 }
