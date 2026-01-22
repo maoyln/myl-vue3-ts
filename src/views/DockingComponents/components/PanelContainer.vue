@@ -8,7 +8,7 @@
                 <!-- 第一个 PanelGroup 前的热区 -->
                  <!-- v-show="index === 0 && shouldShowDropZone" -->
                 <div 
-                    v-show="index === 0"
+                    v-show="index === 0 && shouldShowDropZone"
                     class="drop-zone-container"
                     :class="{ 'active': activePosition === `before-${index}` }"
                     :data-drop-zone="`before-${index}`"
@@ -19,7 +19,8 @@
 
                 <!-- 每个 PanelGroup 后的热区 -->
                 <!-- v-show="shouldShowDropZone" -->
-                <div 
+                <div
+                    v-show="shouldShowDropZone"
                     class="drop-zone-container"
                     :class="{ 'active': activePosition === `after-${index}` }"
                     :data-drop-zone="`after-${index}`"
@@ -40,7 +41,7 @@
                     <!-- 第一个 PanelGroup 前的热区 -->
                      <!-- v-show="index === 0 && shouldShowDropZone" -->
                     <div 
-                        v-show="index === 0"
+                        v-show="index === 0 && shouldShowDropZone"
                         class="drop-zone-container"
                         :class="{ 'active': activePosition === `${item.id}-before-${index}` }"
                         :data-drop-zone="`${item.id}-before-${index}`"
@@ -51,6 +52,7 @@
                     <!-- 每个 PanelGroup 后的热区 -->
                      <!-- v-show="shouldShowDropZone" -->
                     <div 
+                        v-show="shouldShowDropZone"
                         class="drop-zone-container"
                         :class="{ 'active': activePosition === `${item.id}-after-${index}` }"
                         :data-drop-zone="`${item.id}-after-${index}`"
@@ -207,7 +209,7 @@ watch(() => props.container, () => {
 
 /* 热区基础样式 - PanelGroup 之间的插入热区 */
 .drop-zone-container {
-    background: rgba(103, 194, 58, 0.5);
+    background: rgba(255, 255, 255, 0);
     border-radius: 3px;
     pointer-events: auto; /* 确保热区能接收鼠标事件 */
     transition: all 0.15s;

@@ -75,11 +75,8 @@ const { position, isDragging } = useDrag(panelRef, {
     opacity: 0.8;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
     z-index: 10000; /* 非常高的层级，确保在所有元素之上（包括浮动窗体） */
-    /* 拖拽时移除过渡效果，直接响应 */
     transition: none;
-    /* 关键：让鼠标事件穿透，使下层热区能接收到事件 */
     pointer-events: none;
-    /* 确保拖拽的 panel 可以超出任何容器 */
     position: relative;
 }
 

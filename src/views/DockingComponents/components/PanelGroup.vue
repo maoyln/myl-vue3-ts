@@ -10,7 +10,7 @@
             <!-- 第一个 Panel 前的热区 -->
             <!-- v-show="index === 0 && shouldShowDropZone" -->
             <div 
-                v-show="index === 0"
+                v-show="index === 0 && shouldShowDropZone"
                 class="drop-zone"
                 :class="{ 'active': activePosition === `before-${index}` }"
                 :data-drop-zone="`before-${index}`"
@@ -21,7 +21,8 @@
 
             <!-- 每个 Panel 后的热区（也是下一个 Panel 之间的热区）-->
              <!-- v-show="shouldShowDropZone" -->
-            <div 
+            <div
+                v-show="shouldShowDropZone"
                 class="drop-zone"
                 :class="{ 'active': activePosition === `after-${index}` }"
                 :data-drop-zone="`after-${index}`"
@@ -115,7 +116,7 @@ watch(() => props.group.panels, () => {
 
 /* 热区基础样式 - Panel 之间的插入热区 */
 .drop-zone {
-    background: rgba(64, 158, 255, 0.5);
+    background: rgba(255, 255, 255, 0);
     border-radius: 3px;
     pointer-events: auto; /* 确保热区能接收鼠标事件 */
     transition: all 0.15s;
