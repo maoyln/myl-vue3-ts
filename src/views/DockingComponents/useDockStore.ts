@@ -6,6 +6,22 @@ export interface Panel {
   id: string;
   name: string;
   tabs?: any[];
+  /** 当前宽度 */
+  width?: number;
+  /** 当前高度 */
+  height?: number;
+  /** 原始宽度（初始值） */
+  originalWidth?: number;
+  /** 原始高度（初始值） */
+  originalHeight?: number;
+  /** 最小宽度 */
+  minWidth?: number;
+  /** 最小高度 */
+  minHeight?: number;
+  /** 最大宽度 */
+  maxWidth?: number;
+  /** 最大高度 */
+  maxHeight?: number;
   [key: string]: any;
 }
 
@@ -366,6 +382,254 @@ export const useDockStore = defineStore('dock', {
       };
       
       this.floatPanelGroups.push(newFloatGroup);
+    },
+
+    /**
+     * 调整 PanelGroup 的大小
+     */
+    resizePanelGroup(groupId: string, width: number, height: number) {
+      // 在固定容器中查找
+      for (const container of Object.values(this.dockContainers)) {
+        const group = container.groups.find(g => g.id === groupId);
+        if (group) {
+          group.width = width;
+          group.height = height;
+          return;
+        }
+      }
+
+      // 在浮动窗体中查找
+      for (const floatGroup of this.floatPanelGroups) {
+        const group = floatGroup.groups.find(g => g.id === groupId);
+        if (group) {
+          group.width = width;
+          group.height = height;
+          return;
+        }
+      }
+    },
+
+
+    /**
+     * 获取相邻 panel 的约束信息（用于在调整前检查边界）
+     * @param panelId 当前 panel ID
+     * @param direction 布局方向
+     * @returns 相邻 panel 的约束信息，如果不存在则返回 null
+     */
+    getAdjacentPanelConstraints(
+      panelId: string,
+      direction: 'row' | 'column'
+    ): { min: number; max: number; current: number } | null {
+      const location = this.findPanelLocation(panelId);
+      if (!location) {
+        return null;
+      }
+
+      let group: PanelGroup | null = null;
+
+      if (location.type === 'container') {
+        const container = this.dockContainers[location.containerKey];
+        group = container.groups.find(g => g.id === location.groupId) || null;
+      } else {
+        const floatGroup = this.floatPanelGroups.find(f => f.id === location.floatGroupId);
+        group = floatGroup?.groups.find(g => g.id === location.groupId) || null;
+      }
+
+      if (!group) {
+        return null;
+      }
+
+      // 只获取紧邻的下一个 panel（不处理最后一个 panel，因为它使用 flex: 1 填满剩余空间）
+      const nextPanelIndex = location.panelIndex + 1;
+      const nextPanel = nextPanelIndex < group.panels.length - 1 
+        ? group.panels[nextPanelIndex] 
+        : null;
+
+      if (!nextPanel) {
+        return null;
+      }
+
+      if (direction === 'row') {
+        // row 布局：返回高度的约束
+        const currentHeight = nextPanel.height || nextPanel.originalHeight || 150;
+        return {
+          min: nextPanel.minHeight || 50,
+          max: nextPanel.maxHeight || Infinity,
+          current: currentHeight
+        };
+      } else {
+        // column 布局：返回宽度的约束
+        const currentWidth = nextPanel.width || nextPanel.originalWidth || 200;
+        return {
+          min: nextPanel.minWidth || 50,
+          max: nextPanel.maxWidth || Infinity,
+          current: currentWidth
+        };
+      }
+    },
+
+    /**
+     * 调整 Panel 的大小，只影响被拖拽的 panel 和其后一个 panel
+     * 两个 panel 重新分配它们原来所占的宽度或高度
+     * @param panelId 要调整的 panel ID
+     * @param width 新宽度（仅用于 column 布局）
+     * @param height 新高度（仅用于 row 布局）
+     * @param direction 布局方向
+     */
+    resizePanelWithAdjacent(
+      panelId: string,
+      width: number,
+      height: number,
+      direction: 'row' | 'column'
+    ) {
+      const location = this.findPanelLocation(panelId);
+      if (!location) {
+        console.error('未找到 panel:', panelId);
+        return;
+      }
+
+      let group: PanelGroup | null = null;
+
+      if (location.type === 'container') {
+        const container = this.dockContainers[location.containerKey];
+        group = container.groups.find(g => g.id === location.groupId) || null;
+      } else {
+        const floatGroup = this.floatPanelGroups.find(f => f.id === location.floatGroupId);
+        group = floatGroup?.groups.find(g => g.id === location.groupId) || null;
+      }
+
+      if (!group) {
+        return;
+      }
+
+      const panel = group.panels[location.panelIndex];
+      if (!panel) {
+        return;
+      }
+
+      // 只获取紧邻的下一个 panel（不处理最后一个 panel，因为它使用 flex: 1 填满剩余空间）
+      const nextPanelIndex = location.panelIndex + 1;
+      const nextPanel = nextPanelIndex < group.panels.length - 1 
+        ? group.panels[nextPanelIndex] 
+        : null;
+
+      // 根据布局方向调整尺寸
+      if (direction === 'row') {
+        // row 布局：调整高度，只影响当前 panel 和下一个 panel
+        const oldHeight = panel.height || panel.originalHeight || 150;
+        const nextOldHeight = nextPanel ? (nextPanel.height || nextPanel.originalHeight || 150) : 0;
+
+        // 计算期望的新高度
+        const desiredHeight = Math.max(
+          panel.minHeight || 50,
+          Math.min(panel.maxHeight || Infinity, height)
+        );
+        const heightDelta = desiredHeight - oldHeight;
+
+        // 如果有下一个 panel，检查它是否能接受这个变化
+        if (nextPanel) {
+          const nextNewHeight = nextOldHeight - heightDelta;
+          const nextMinHeight = nextPanel.minHeight || 50;
+          const nextMaxHeight = nextPanel.maxHeight || Infinity;
+
+          // 检查下一个 panel 是否达到边界
+          if (nextNewHeight < nextMinHeight) {
+            // 下一个 panel 会小于最小值，限制当前 panel 的调整
+            const maxAllowedHeight = oldHeight + (nextOldHeight - nextMinHeight);
+            panel.height = Math.min(desiredHeight, maxAllowedHeight);
+            nextPanel.height = nextMinHeight;
+          } else if (nextNewHeight > nextMaxHeight) {
+            // 下一个 panel 会大于最大值，限制当前 panel 的调整
+            const minAllowedHeight = oldHeight - (nextMaxHeight - nextOldHeight);
+            panel.height = Math.max(desiredHeight, minAllowedHeight);
+            nextPanel.height = nextMaxHeight;
+          } else {
+            // 正常情况：两个 panel 重新分配高度
+            panel.height = desiredHeight;
+            nextPanel.height = nextNewHeight;
+          }
+        } else {
+          // 没有下一个 panel，只更新当前 panel
+          panel.height = desiredHeight;
+        }
+      } else if (direction === 'column') {
+        // column 布局：调整宽度，只影响当前 panel 和下一个 panel
+        const oldWidth = panel.width || panel.originalWidth || 200;
+        const nextOldWidth = nextPanel ? (nextPanel.width || nextPanel.originalWidth || 200) : 0;
+
+        // 计算期望的新宽度
+        const desiredWidth = Math.max(
+          panel.minWidth || 50,
+          Math.min(panel.maxWidth || Infinity, width)
+        );
+        const widthDelta = desiredWidth - oldWidth;
+
+        // 如果有下一个 panel，检查它是否能接受这个变化
+        if (nextPanel) {
+          const nextNewWidth = nextOldWidth - widthDelta;
+          const nextMinWidth = nextPanel.minWidth || 50;
+          const nextMaxWidth = nextPanel.maxWidth || Infinity;
+
+          // 检查下一个 panel 是否达到边界
+          if (nextNewWidth < nextMinWidth) {
+            // 下一个 panel 会小于最小值，限制当前 panel 的调整
+            const maxAllowedWidth = oldWidth + (nextOldWidth - nextMinWidth);
+            panel.width = Math.min(desiredWidth, maxAllowedWidth);
+            nextPanel.width = nextMinWidth;
+          } else if (nextNewWidth > nextMaxWidth) {
+            // 下一个 panel 会大于最大值，限制当前 panel 的调整
+            const minAllowedWidth = oldWidth - (nextMaxWidth - nextOldWidth);
+            panel.width = Math.max(desiredWidth, minAllowedWidth);
+            nextPanel.width = nextMaxWidth;
+          } else {
+            // 正常情况：两个 panel 重新分配宽度
+            panel.width = desiredWidth;
+            nextPanel.width = nextNewWidth;
+          }
+        } else {
+          // 没有下一个 panel，只更新当前 panel
+          panel.width = desiredWidth;
+        }
+      }
+    },
+
+    /**
+     * 调整 Panel 的大小（如果 Panel 有独立尺寸）
+     */
+    resizePanel(panelId: string, width: number, height: number) {
+      const location = this.findPanelLocation(panelId);
+      if (!location) {
+        console.error('未找到 panel:', panelId);
+        return;
+      }
+
+      let panel: Panel | undefined;
+
+      if (location.type === 'container') {
+        const container = this.dockContainers[location.containerKey];
+        const group = container.groups.find(g => g.id === location.groupId);
+        panel = group?.panels.find(p => p.id === panelId);
+      } else {
+        const floatGroup = this.floatPanelGroups.find(f => f.id === location.floatGroupId);
+        const group = floatGroup?.groups.find(g => g.id === location.groupId);
+        panel = group?.panels.find(p => p.id === panelId);
+      }
+
+      if (panel) {
+        // 应用最小/最大约束
+        if (width !== undefined) {
+          panel.width = Math.max(
+            panel.minWidth || 50,
+            Math.min(panel.maxWidth || Infinity, width)
+          );
+        }
+        if (height !== undefined) {
+          panel.height = Math.max(
+            panel.minHeight || 50,
+            Math.min(panel.maxHeight || Infinity, height)
+          );
+        }
+      }
     },
   },
 });

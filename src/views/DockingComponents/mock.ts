@@ -10,9 +10,30 @@ export const mockData = {
                     width: 200,
                     height: 200,
                     panels: [
-                        { id: 'panel_left_11', name: '面板-left11' },
-                        { id: 'panel_left_12', name: '面板-left12' },
-                        { id: 'panel_left_13', name: '面板-left13' },
+                        { 
+                            id: 'panel_left_11', 
+                            name: '面板-left11',
+                            height: 150,
+                            originalHeight: 150,
+                            minHeight: 80,
+                            maxHeight: 400
+                        },
+                        { 
+                            id: 'panel_left_12', 
+                            name: '面板-left12',
+                            height: 150,
+                            originalHeight: 150,
+                            minHeight: 80,
+                            maxHeight: 400
+                        },
+                        { 
+                            id: 'panel_left_13', 
+                            name: '面板-left13',
+                            height: 150,
+                            originalHeight: 150,
+                            minHeight: 80,
+                            maxHeight: 400
+                        },
                     ],
                 },
                 // {
@@ -47,13 +68,26 @@ export const mockData = {
                     width: 200,
                     height: 200,
                     panels: [
-                        { id: 'panel_right_11', name: '面板-right11', 
+                        { 
+                            id: 'panel_right_11', 
+                            name: '面板-right11',
+                            height: 150,
+                            originalHeight: 150,
+                            minHeight: 80,
+                            maxHeight: 400,
                             tabs: [
                                 { id: 'tab_right_01', title: '面板-right11-标签1', component: 'PanelRight01' },
                                 { id: 'tab_right_02', title: '面板-right12-标签2', component: 'PanelRight02' }
                             ] 
                         },
-                        { id: 'panel_right_12', name: '面板-right12' },
+                        { 
+                            id: 'panel_right_12', 
+                            name: '面板-right12',
+                            height: 150,
+                            originalHeight: 150,
+                            minHeight: 80,
+                            maxHeight: 400
+                        },
                     ],
                 },
                 {
@@ -62,11 +96,46 @@ export const mockData = {
                     width: 200,
                     height: 200,
                     panels: [
-                        { id: 'panel_right_21', name: '面板-right21' },
-                        { id: 'panel_right_22', name: '面板-right22' },
-                        { id: 'panel_right_23', name: '面板-right23' },
-                        { id: 'panel_right_24', name: '面板-right24' },
-                        { id: 'panel_right_25', name: '面板-right25' },
+                        { 
+                            id: 'panel_right_21', 
+                            name: '面板-right21',
+                            height: 120,
+                            originalHeight: 120,
+                            minHeight: 80,
+                            maxHeight: 400
+                        },
+                        { 
+                            id: 'panel_right_22', 
+                            name: '面板-right22',
+                            height: 120,
+                            originalHeight: 120,
+                            minHeight: 80,
+                            maxHeight: 400
+                        },
+                        { 
+                            id: 'panel_right_23', 
+                            name: '面板-right23',
+                            height: 120,
+                            originalHeight: 120,
+                            minHeight: 80,
+                            maxHeight: 400
+                        },
+                        { 
+                            id: 'panel_right_24', 
+                            name: '面板-right24',
+                            height: 120,
+                            originalHeight: 120,
+                            minHeight: 80,
+                            maxHeight: 400
+                        },
+                        { 
+                            id: 'panel_right_25', 
+                            name: '面板-right25',
+                            height: 120,
+                            originalHeight: 120,
+                            minHeight: 80,
+                            maxHeight: 400
+                        },
                     ],
                 },
             ],
@@ -81,9 +150,30 @@ export const mockData = {
                     width: 200,
                     height: 200,
                     panels: [
-                        { id: 'panel_top_11', name: '面板-top11' },
-                        { id: 'panel_top_12', name: '面板-top12' },
-                        { id: 'panel_top_13', name: '面板-top13' },
+                        { 
+                            id: 'panel_top_11', 
+                            name: '面板-top11',
+                            width: 200,
+                            originalWidth: 200,
+                            minWidth: 100,
+                            maxWidth: 500
+                        },
+                        { 
+                            id: 'panel_top_12', 
+                            name: '面板-top12',
+                            width: 200,
+                            originalWidth: 200,
+                            minWidth: 100,
+                            maxWidth: 500
+                        },
+                        { 
+                            id: 'panel_top_13', 
+                            name: '面板-top13',
+                            width: 200,
+                            originalWidth: 200,
+                            minWidth: 100,
+                            maxWidth: 500
+                        },
                     ],
                 },
                 // {
@@ -111,8 +201,30 @@ export const mockData = {
                     width: 200,
                     height: 200,
                     panels: [
-                        { id: 'panel_bottom_11', name: '面板-bot11' },
-                        { id: 'panel_bottom_12', name: '面板-bot12' },
+                        { 
+                            id: 'panel_bottom_11', 
+                            name: '面板-bot11',
+                            width: 200,
+                            height: 150,
+                            originalWidth: 200,
+                            originalHeight: 150,
+                            minWidth: 100,
+                            minHeight: 80,
+                            maxWidth: 800,
+                            maxHeight: 400
+                        },
+                        { 
+                            id: 'panel_bottom_12', 
+                            name: '面板-bot12',
+                            width: 200,
+                            height: 150,
+                            originalWidth: 200,
+                            originalHeight: 150,
+                            minWidth: 100,
+                            minHeight: 80,
+                            maxWidth: 500,
+                            maxHeight: 400
+                        },
                     ],
                 },
                 
@@ -122,10 +234,54 @@ export const mockData = {
                     width: 200,
                     height: 200,
                     panels: [
-                        { id: 'panel_bottom_21', name: '面板-bot21' },
-                        { id: 'panel_bottom_22', name: '面板-bot22' },
-                        { id: 'panel_bottom_23', name: '面板-bot23' },
-                        { id: 'panel_bottom_24', name: '面板-bot24' },
+                        { 
+                            id: 'panel_bottom_21', 
+                            name: '面板-bot21',
+                            width: 200,
+                            height: 150,
+                            originalWidth: 200,
+                            originalHeight: 150,
+                            minWidth: 100,
+                            minHeight: 80,
+                            maxWidth: 500,
+                            maxHeight: 400
+                        },
+                        { 
+                            id: 'panel_bottom_22', 
+                            name: '面板-bot22',
+                            width: 200,
+                            height: 150,
+                            originalWidth: 200,
+                            originalHeight: 150,
+                            minWidth: 100,
+                            minHeight: 80,
+                            maxWidth: 500,
+                            maxHeight: 400
+                        },
+                        { 
+                            id: 'panel_bottom_23', 
+                            name: '面板-bot23',
+                            width: 200,
+                            height: 150,
+                            originalWidth: 200,
+                            originalHeight: 150,
+                            minWidth: 100,
+                            minHeight: 80,
+                            maxWidth: 500,
+                            maxHeight: 400
+                        },
+                        { 
+                            id: 'panel_bottom_24', 
+                            name: '面板-bot24',
+                            width: 200,
+                            height: 150,
+                            originalWidth: 200,
+                            originalHeight: 150,
+                            minWidth: 100,
+                            minHeight: 80,
+                            maxWidth: 500,
+                            maxHeight: 400
+                        },
                     ],
                 },
             ],

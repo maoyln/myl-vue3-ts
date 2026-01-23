@@ -15,7 +15,7 @@
                 ></div>
 
                 <!-- PanelGroup 组件 -->
-                <PanelGroup :group="group" :direction="direction" />
+                <PanelGroup :group="group" :direction="direction" :containerKey="containerKey" />
 
                 <!-- 每个 PanelGroup 后的热区 -->
                 <!-- v-show="shouldShowDropZone" -->
@@ -47,7 +47,7 @@
                         :data-drop-zone="`${item.id}-before-${index}`"
                     ></div>
                     <!-- PanelGroup 组件 -->
-                    <PanelGroup :group="group" :direction="direction" />
+                    <PanelGroup :group="group" :direction="direction" containerKey="float" />
 
                     <!-- 每个 PanelGroup 后的热区 -->
                      <!-- v-show="shouldShowDropZone" -->
@@ -81,6 +81,7 @@ const layoutDirectionStyle = computed(() => {
 });
 
 // 计算浮动窗体的样式
+// 浮动窗体使用第一个 group 的宽高（如果存在）
 const getFloatItemStyle = (item: any) => {
     const styles: any = {
         position: 'absolute',
@@ -88,6 +89,7 @@ const getFloatItemStyle = (item: any) => {
         top: `${item.y || 0}px`,
     };
     
+    // 浮动窗体：宽高都由内容撑开（通过 PanelGroup 的尺寸）
     // 如果有 groups，使用第一个 group 的宽高
     if (item.groups && item.groups.length > 0) {
         const firstGroup = item.groups[0];
@@ -187,6 +189,9 @@ watch(() => props.container, () => {
     border: 1px solid #000;
     height: 100%;
     width: 100%;
+    /* 确保容器能够正确显示内容 */
+    min-width: 0;
+    min-height: 0;
 }
 
 /* 浮动窗体容器 */

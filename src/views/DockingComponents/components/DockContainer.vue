@@ -75,9 +75,10 @@ function handleMouseUp(e: MouseEvent) {
 }
 
 .dock-left {
-    width: 300px;
+    /* 宽度由内容撑开（PanelGroup 的 width） */
     height: 100%;
     border: 1px solid red;
+    flex-shrink: 0; /* 防止被压缩 */
 }
 
 .dock-middle {
@@ -85,28 +86,33 @@ function handleMouseUp(e: MouseEvent) {
     flex-direction: column;
     flex: 1;
     border: 1px solid blue;
+    min-width: 0; /* 允许 flex 子元素缩小 */
 }
 
 .dock-right {
-    width: 300px;
+    /* 宽度由内容撑开（PanelGroup 的 width） */
     height: 100%;
     border: 1px solid green;
+    flex-shrink: 0; /* 防止被压缩 */
 }
 
 .dock-top {
-    height: 280px;
+    /* 高度由内容撑开（PanelGroup 的 height） */
     border: 1px solid yellow;
+    flex-shrink: 0; /* 防止被压缩 */
 }
 
 .dock-content {
     flex: 1;
     border: 1px solid purple;
     background: #f0f0f0;
+    min-height: 0; /* 允许 flex 子元素缩小 */
 }
 
 .dock-bottom {
-    height: 280px;
+    /* 高度由内容撑开（PanelGroup 的 height） */
     border: 1px solid orange;
+    flex-shrink: 0; /* 防止被压缩 */
 }
 
 </style>
