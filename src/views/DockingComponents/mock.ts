@@ -158,8 +158,8 @@ export const mockData = {
                             maxWidth: 800,
                             maxHeight: 400,
                             tabs: [
-                                { id: 'tab_right_01', title: '面板-right11-标签1', component: 'PanelRight01' },
-                                { id: 'tab_right_02', title: '面板-right12-标签2', component: 'PanelRight02' }
+                                { id: 'tab_right_01', title: '标签1', component: 'PanelRight01' },
+                                { id: 'tab_right_02', title: '标签2', component: 'PanelRight02' }
                             ] 
                         },
                         { 

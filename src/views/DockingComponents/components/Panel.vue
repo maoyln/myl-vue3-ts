@@ -6,15 +6,19 @@
         :class="{ 'is-dragging': isDragging, 'is-resizing': isResizing }"
         :style="panelStyle"
     >
-        {{ panel.name }}
-        <div v-for="tab in panel.tabs" :key="tab.id">
-            <div class="tab-title">
-                {{ tab.title }}
-            </div>
-            <div class="tab-content">
-                <component :is="tab.component" />
-            </div>
+        <!-- Panel 标题（如果有 tabs 则不显示，由 Tabs 组件管理） -->
+        <div v-if="!panel.tabs || panel.tabs.length === 0" class="panel-name">
+            {{ panel.name }}
         </div>
+
+        <!-- Tabs 组件（如果有 tabs） -->
+        <Tabs
+            v-if="panel.tabs && panel.tabs.length > 0"
+            :tabs="panel.tabs"
+            :default-active-id="panel.tabs[0]?.id"
+            :closable="false"
+            @tab-change="handleTabChange"
+        />
         
         <!-- 拖拽信息 -->
         <div class="drag-info" v-if="isDragging">
@@ -38,6 +42,7 @@ import { ref, computed } from 'vue';
 import { useDrag } from '../useDrag';
 import { useResize } from '../useResize';
 import { useDockStore } from '../useDockStore';
+import Tabs from './Tabs.vue';
 
 const props = defineProps<{
     panel: any;
@@ -281,6 +286,12 @@ const resizeHandles = computed(() => {
     }
     return getHandles();
 });
+
+// Tab 切换处理
+const handleTabChange = (tabId: string) => {
+    console.log('Tab 切换:', tabId);
+    // 可以在这里添加额外的逻辑，比如保存当前激活的 tab
+};
 </script>
 
 <style scoped>
@@ -295,6 +306,18 @@ const resizeHandles = computed(() => {
     transform: translate3d(0, 0, 0);
     backface-visibility: hidden;
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.panel-name {
+    padding: 8px 12px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    flex-shrink: 0;
 }
 
 .panel:hover {

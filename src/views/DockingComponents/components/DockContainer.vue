@@ -3,13 +3,13 @@
     <div ref="containerRef" class="dock-container" @mouseup="handleMouseUp" @mousemove="handleMouseMove">
         <div class="dock-layout">
             <!-- 布局容器 -->
-             <div class="dock-left">
+             <!-- <div class="dock-left">
                 <PanelContainer :container="dockContainers.left" direction="row" containerKey="left" />
-             </div>
+             </div> -->
              <div class="dock-middle">
-                <div class="dock-top">
+                <!-- <div class="dock-top">
                     <PanelContainer :container="dockContainers.top" direction="column" containerKey="top" />
-                </div>
+                </div> -->
                 <div class="dock-content">
                     <slot></slot>
                 </div>
