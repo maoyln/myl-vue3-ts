@@ -1,6 +1,9 @@
 <template>
     <div class="docking-components">
-        <DockContainer :dockContainers="dockContainers" :floatPanelGroups="floatPanelGroups" >
+        <DockContainer 
+            :dockContainers="dockContainers" 
+            :floatPanelGroups="floatPanelGroups"
+        >
             主内容区域
         </DockContainer>
     </div>
@@ -10,6 +13,7 @@
 import { computed, onMounted } from 'vue';
 import DockContainer from './components/DockContainer.vue';
 import { useDockStore } from './useDockStore';
+
 const dockStore = useDockStore();
 const dockContainers = computed(() => dockStore.dockContainers);
 const floatPanelGroups = computed(() => dockStore.floatPanelGroups);
@@ -28,5 +32,7 @@ onMounted(() => {
 .docking-components {
     width: 100%;
     height: 100%;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
 }
 </style>

@@ -186,7 +186,7 @@ watch(() => props.container, () => {
 .dock-layout-item {
     display: flex;
     flex-direction: row;
-    border: 1px solid #000;
+    box-sizing: border-box;
     height: 100%;
     width: 100%;
     /* 确保容器能够正确显示内容 */
@@ -206,7 +206,7 @@ watch(() => props.container, () => {
     display: flex;
     flex-direction: inherit;
     position: absolute;
-    border: 1px solid #333;
+    box-sizing: border-box;
     background: #fff;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     border-radius: 4px;
@@ -218,7 +218,6 @@ watch(() => props.container, () => {
     border-radius: 3px;
     pointer-events: auto; /* 确保热区能接收鼠标事件 */
     transition: all 0.15s;
-    flex-shrink: 0;
     position: relative;
     z-index: 999; /* PanelContainer 的热区优先级较低，在 PanelGroup 热区之下 */
 }

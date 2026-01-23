@@ -29,19 +29,27 @@
 </template>
 
 <script setup lang="ts">
+import { ref, provide } from 'vue';
 import PanelContainer from './PanelContainer.vue';
 
 const props = defineProps<{
     dockContainers: any;
     floatPanelGroups: any;
 }>();
-function handleMouseMove(e: MouseEvent) {
+
+// 容器引用
+const containerRef = ref<HTMLElement | null>(null);
+
+// 提供容器引用给子组件使用
+provide('dockContainerRef', containerRef);
+
+function handleMouseMove(_e: MouseEvent) {
     // 如果有拖拽的内容，这需要实时定位
     // console.log('handleMouseMove', e);
 
 }
 
-function handleMouseUp(e: MouseEvent) {
+function handleMouseUp(_e: MouseEvent) {
     // 如果有拖拽的内容，鼠标抬起的时候需要做的事情
     // console.log('handleMouseUp', e);
 }
@@ -77,42 +85,38 @@ function handleMouseUp(e: MouseEvent) {
 .dock-left {
     /* 宽度由内容撑开（PanelGroup 的 width） */
     height: 100%;
-    border: 1px solid red;
-    flex-shrink: 0; /* 防止被压缩 */
+    box-sizing: border-box;
 }
 
 .dock-middle {
     display: flex;
     flex-direction: column;
     flex: 1;
-    border: 1px solid blue;
-    min-width: 0; /* 允许 flex 子元素缩小 */
+    min-width: 100px; /* 允许 flex 子元素缩小 */
+    box-sizing: border-box;
 }
 
 .dock-right {
     /* 宽度由内容撑开（PanelGroup 的 width） */
     height: 100%;
-    border: 1px solid green;
-    flex-shrink: 0; /* 防止被压缩 */
+    box-sizing: border-box;
 }
 
 .dock-top {
     /* 高度由内容撑开（PanelGroup 的 height） */
-    border: 1px solid yellow;
-    flex-shrink: 0; /* 防止被压缩 */
+    box-sizing: border-box;
 }
 
 .dock-content {
     flex: 1;
-    border: 1px solid purple;
     background: #f0f0f0;
-    min-height: 0; /* 允许 flex 子元素缩小 */
+    min-height: 100px; /* 允许 flex 子元素缩小 */
+    box-sizing: border-box;
 }
 
 .dock-bottom {
     /* 高度由内容撑开（PanelGroup 的 height） */
-    border: 1px solid orange;
-    flex-shrink: 0; /* 防止被压缩 */
+    box-sizing: border-box;
 }
 
 </style>

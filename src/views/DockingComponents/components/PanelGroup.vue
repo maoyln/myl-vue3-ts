@@ -49,7 +49,7 @@
 
 <script setup lang="ts">
 import Panel from './Panel.vue';
-import { computed, ref, watch, nextTick } from 'vue';
+import { computed, ref, watch, nextTick, inject, type Ref } from 'vue';
 import { useDropZone } from '../useDropZone';
 import { useDragDrop } from '../useDragDrop';
 import { useDragContext } from '../useDragContext';
@@ -112,6 +112,9 @@ const groupStyle = computed(() => {
 // PanelGroup 引用
 const panelGroupRef = ref<HTMLElement | null>(null);
 
+// 判断是否为悬浮状态
+const isFloat = computed(() => props.containerKey === 'float');
+
 // 使用拖拽处理 hooks
 const dragDrop = useDragDrop();
 const dragContext = useDragContext();
@@ -137,6 +140,8 @@ const dropZone = useDropZone(panelGroupRef, {
     allowedPositions: allowedPositions as any,
     dropZoneClass: 'drop-zone',
     onEnter: (position) => {
+        // float 状态下不注册热区
+        if (isFloat.value) return;
         dragDrop.registerDropZone({
             scenario: 'panelGroup',
             position,
@@ -145,6 +150,8 @@ const dropZone = useDropZone(panelGroupRef, {
         });
     },
     onLeave: () => {
+        // float 状态下不处理离开事件
+        if (isFloat.value) return;
         // 只有在拖拽未结束时才清除，避免在释放时清除
         if (dragContext.getCurrentDrag().value) {
             dragDrop.clearDropZone();
@@ -152,12 +159,17 @@ const dropZone = useDropZone(panelGroupRef, {
     },
 });
 
-const { shouldShowDropZone, activePosition } = dropZone;
+const { shouldShowDropZone: baseShouldShowDropZone, activePosition } = dropZone;
 
-// 监听 panels 变化，确保热区在数据更新后重新初始化
+// 在 float 状态下禁用热区显示
+const shouldShowDropZone = computed(() => {
+    return !isFloat.value && baseShouldShowDropZone.value;
+});
+
+// 监听 panels 变化，确保热区在数据更新后重新初始化（只在非悬浮状态下）
 watch(() => props.group.panels, () => {
     // 只在拖拽时重新初始化，避免不必要的性能开销
-    if (dragContext.getCurrentDrag().value) {
+    if (!isFloat.value && dropZone && dragContext.getCurrentDrag().value) {
         nextTick(() => {
             dropZone.initDropZones();
         });
@@ -186,12 +198,189 @@ const allowedHandles = computed<Array<'n' | 's' | 'e' | 'w' | 'se'>>(() => {
     }
 });
 
+// 获取 DockContainer 引用
+const dockContainerRef = inject<Ref<HTMLElement | null>>('dockContainerRef', ref(null));
+
+// 获取容器尺寸和其他区域的尺寸
+const getContainerConstraints = () => {
+    if (!dockContainerRef.value) {
+        return {
+            containerWidth: 0,
+            containerHeight: 0,
+            leftWidth: 0,
+            rightWidth: 0,
+            topHeight: 0,
+            bottomHeight: 0,
+            middleMinWidth: 0,
+            middleMinHeight: 0,
+            otherGroupsWidth: 0,
+            otherGroupsHeight: 0
+        };
+    }
+
+    const container = dockContainerRef.value;
+    const middleEl = container.querySelector('.dock-middle') as HTMLElement;
+    const contentEl = container.querySelector('.dock-content') as HTMLElement;
+
+    // 从 store 中获取左右两侧的总宽度（实时更新）
+    let leftWidth = 0;
+    let rightWidth = 0;
+    if (store.dockContainers.left) {
+        store.dockContainers.left.groups.forEach(group => {
+            leftWidth += group.width || 0;
+        });
+    }
+    if (store.dockContainers.right) {
+        store.dockContainers.right.groups.forEach(group => {
+            rightWidth += group.width || 0;
+        });
+    }
+
+    // 从 store 中获取上下两侧的总高度（实时更新）
+    let topHeight = 0;
+    let bottomHeight = 0;
+    if (store.dockContainers.top) {
+        store.dockContainers.top.groups.forEach(group => {
+            topHeight += group.height || 0;
+        });
+    }
+    if (store.dockContainers.bottom) {
+        store.dockContainers.bottom.groups.forEach(group => {
+            bottomHeight += group.height || 0;
+        });
+    }
+
+    // 从 store 中获取当前区域其他 PanelGroup 的总尺寸（不包括当前 PanelGroup）
+    const position = props.containerKey || 'float';
+    let otherGroupsWidth = 0;
+    let otherGroupsHeight = 0;
+    
+    if (position === 'left' && store.dockContainers.left) {
+        store.dockContainers.left.groups.forEach(group => {
+            if (group.id !== props.group.id) {
+                otherGroupsWidth += group.width || 0;
+            }
+        });
+    } else if (position === 'right' && store.dockContainers.right) {
+        store.dockContainers.right.groups.forEach(group => {
+            if (group.id !== props.group.id) {
+                otherGroupsWidth += group.width || 0;
+            }
+        });
+    } else if (position === 'top' && store.dockContainers.top) {
+        store.dockContainers.top.groups.forEach(group => {
+            if (group.id !== props.group.id) {
+                otherGroupsHeight += group.height || 0;
+            }
+        });
+    } else if (position === 'bottom' && store.dockContainers.bottom) {
+        store.dockContainers.bottom.groups.forEach(group => {
+            if (group.id !== props.group.id) {
+                otherGroupsHeight += group.height || 0;
+            }
+        });
+    }
+
+    return {
+        containerWidth: container.offsetWidth || 0,
+        containerHeight: container.offsetHeight || 0,
+        leftWidth,
+        rightWidth,
+        topHeight,
+        bottomHeight,
+        middleMinWidth: middleEl ? parseFloat(getComputedStyle(middleEl).minWidth) || 0 : 0,
+        middleMinHeight: contentEl ? parseFloat(getComputedStyle(contentEl).minHeight) || 0 : 0,
+        otherGroupsWidth,
+        otherGroupsHeight
+    };
+};
+
+// 计算实际的最大宽度限制
+const computedMaxWidth = computed(() => {
+    const position = props.containerKey || 'float';
+    
+    // 依赖 store 中的数据，确保实时更新
+    if (position === 'left' || position === 'right') {
+        // 访问左右两侧的 store 数据以建立响应式依赖
+        const leftContainer = store.dockContainers.left;
+        const rightContainer = store.dockContainers.right;
+        if (!leftContainer && !rightContainer) return Infinity;
+        
+        const constraints = getContainerConstraints();
+        if (constraints.containerWidth === 0) return Infinity;
+        
+        if (position === 'left') {
+            // 左侧：最大宽度 = 容器总宽度 - 中间最小宽度 - 右侧宽度 - 左侧其他 PanelGroup 的宽度
+            const maxWidth = constraints.containerWidth - constraints.middleMinWidth - constraints.rightWidth - constraints.otherGroupsWidth;
+            return Math.max(100, maxWidth);
+        } else {
+            // 右侧：最大宽度 = 容器总宽度 - 中间最小宽度 - 左侧宽度 - 右侧其他 PanelGroup 的宽度
+            const maxWidth = constraints.containerWidth - constraints.middleMinWidth - constraints.leftWidth - constraints.otherGroupsWidth;
+            return Math.max(100, maxWidth);
+        }
+    }
+    
+    // float 状态：最大宽度不超过容器宽度
+    if (position === 'float') {
+        const constraints = getContainerConstraints();
+        return constraints.containerWidth > 0 ? constraints.containerWidth : Infinity;
+    }
+    
+    return Infinity;
+});
+
+// 计算实际的最大高度限制
+const computedMaxHeight = computed(() => {
+    const position = props.containerKey || 'float';
+    
+    // 依赖 store 中的数据，确保实时更新
+    if (position === 'top' || position === 'bottom') {
+        // 访问上下两侧的 store 数据以建立响应式依赖
+        const topContainer = store.dockContainers.top;
+        const bottomContainer = store.dockContainers.bottom;
+        if (!topContainer && !bottomContainer) return Infinity;
+        
+        const constraints = getContainerConstraints();
+        if (constraints.containerHeight === 0) return Infinity;
+        
+        if (position === 'top') {
+            // 上侧：最大高度 = 容器总高度 - 中间最小高度 - 下侧高度 - 上侧其他 PanelGroup 的高度
+            const maxHeight = constraints.containerHeight - constraints.middleMinHeight - constraints.bottomHeight - constraints.otherGroupsHeight;
+            return Math.max(100, maxHeight);
+        } else {
+            // 下侧：最大高度 = 容器总高度 - 中间最小高度 - 上侧高度 - 下侧其他 PanelGroup 的高度
+            const maxHeight = constraints.containerHeight - constraints.middleMinHeight - constraints.topHeight - constraints.otherGroupsHeight;
+            return Math.max(100, maxHeight);
+        }
+    }
+    
+    // float 状态：最大高度不超过容器高度
+    if (position === 'float') {
+        const constraints = getContainerConstraints();
+        return constraints.containerHeight > 0 ? constraints.containerHeight : Infinity;
+    }
+    
+    return Infinity;
+});
+
+// 计算实际的最小宽度限制
+const computedMinWidth = computed(() => {
+    return 100;
+});
+
+// 计算实际的最小高度限制
+const computedMinHeight = computed(() => {
+    return 100;
+});
+
 // 使用调整大小 hooks
 const { isResizing, size, getHandles } = useResize(panelGroupRef, {
     id: props.group.id,
     type: 'panelGroup',
-    minWidth: 100,
-    minHeight: 100,
+    minWidth: computedMinWidth,
+    minHeight: computedMinHeight,
+    maxWidth: computedMaxWidth,
+    maxHeight: computedMaxHeight,
     allowedHandles,
     // 只有浮动窗体才允许改变位置（left/top）
     allowPositionChange: props.containerKey === 'float',
@@ -227,7 +416,7 @@ const resizeHandles = computed(() => getHandles());
 
 .panel-group {
     display: flex;
-    border: 1px solid blue;
+    box-sizing: border-box;
     position: relative;
     /* 基础尺寸：默认 100%，但会被 groupStyle 覆盖 */
     width: 100%;
@@ -236,7 +425,6 @@ const resizeHandles = computed(() => getHandles());
     /* 确保内容能够正确撑开 */
     min-width: 0;
     min-height: 0;
-    flex-shrink: 0; /* 防止被压缩 */
     /* 确保最后一个 panel 能够填满剩余空间 */
     /* overflow: hidden; */
 }
@@ -337,7 +525,6 @@ const resizeHandles = computed(() => getHandles());
     border-radius: 3px;
     pointer-events: auto; /* 确保热区能接收鼠标事件 */
     transition: all 0.15s;
-    flex-shrink: 0;
     position: relative;
     z-index: 1000; /* PanelGroup 的热区优先级更高，在 PanelContainer 热区之上 */
 }

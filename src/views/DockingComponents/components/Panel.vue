@@ -52,6 +52,7 @@ const store = useDockStore();
 const panelRef = ref<HTMLElement | null>(null);
 
 // 使用拖拽 hooks
+// 悬浮状态下可以拖拽移动位置，但不会触发热区和吸附功能（由 PanelGroup 控制热区）
 const { position, isDragging } = useDrag(panelRef, {
     id: props.panel.id,
     type: 'panel',
@@ -126,7 +127,7 @@ const panelStyle = computed(() => {
 // - left/right + row: 只允许 s（下侧手柄，调整高度）
 // - top/bottom + column: 只允许 e（右侧手柄，调整宽度）
 // - float: 只允许 w, s（左侧、下侧手柄）
-const allowedHandles = computed<Array<'n' | 's' | 'e' | 'w' | 'se'>>(() => {
+const allowedHandles = computed<Array<'n' | 's' | 'e' | 'w'>>(() => {
     const position = props.containerKey || 'float';
     const dir = props.direction || 'row';
     
@@ -284,20 +285,20 @@ const resizeHandles = computed(() => {
 
 <style scoped>
 .panel {
-    border: 1px solid #ccc;
+    outline: 1px solid #ccc;
     background: #fff;
     cursor: move;
     user-select: none;
     position: relative;
-    transition: box-shadow 0.2s, border-color 0.2s, opacity 0.2s;
+    transition: box-shadow 0.2s, outline-color 0.2s, opacity 0.2s;
     /* 性能优化 */
     transform: translate3d(0, 0, 0);
     backface-visibility: hidden;
-    /* 默认尺寸由 panelStyle 控制 */
+    box-sizing: border-box;
 }
 
 .panel:hover {
-    border-color: #409eff;
+    outline-color: #409eff;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 

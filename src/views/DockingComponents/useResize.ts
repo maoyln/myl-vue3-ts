@@ -7,7 +7,7 @@ export type ResizeHandlePosition =
     | 's'      // 下
     | 'e'      // 右
     | 'w'      // 左
-    | 'se';    // 右下（只保留右下角）
+    | 'se';    // 右下
 
 /** 调整大小选项 */
 export interface UseResizeOptions {
