@@ -3,11 +3,11 @@ import { unref } from 'vue';
 
 /** 调整手柄位置 */
 export type ResizeHandlePosition = 
-    | 'n'      // 上
-    | 's'      // 下
-    | 'e'      // 右
-    | 'w'      // 左
-    | 'se';    // 右下
+    | 'n'      // 上 north
+    | 's'      // 下 south
+    | 'e'      // 右 east
+    | 'w'      // 左 west
+    | 'se';    // 右下 south east
 
 /** 调整大小选项 */
 export interface UseResizeOptions {
@@ -25,8 +25,6 @@ export interface UseResizeOptions {
     maxWidth?: MaybeRef<number>;
     /** 最大高度（像素），支持响应式 */
     maxHeight?: MaybeRef<number>;
-    /** 是否保持宽高比（按住 Shift 时） */
-    maintainAspectRatio?: boolean;
     /** 允许的调整方向（根据布局方向自动计算，支持响应式） */
     allowedHandles?: MaybeRef<ResizeHandlePosition[]>;
     /** 是否允许改变位置（left/top），只有浮动窗体才需要，默认为 false */
@@ -54,8 +52,7 @@ export function useResize(
         minHeight: minHeightOption = 50,
         maxWidth: maxWidthOption = Infinity,
         maxHeight: maxHeightOption = Infinity,
-        maintainAspectRatio = false,
-        allowedHandles,
+        allowedHandles, // 允许的调整方向（根据布局方向自动计算，支持响应式）
         allowPositionChange = false, // 默认不允许改变位置（只有浮动窗体需要）
         onResizeStart,
         onResizing,
@@ -84,8 +81,6 @@ export function useResize(
     let startLeft = 0;
     let startTop = 0;
     let currentHandle: ResizeHandlePosition | null = null;
-    let isMaintainingAspectRatio = false;
-    let aspectRatio = 1;
 
     /**
      * 获取手柄的 CSS 类名
@@ -128,24 +123,20 @@ export function useResize(
         const isEnabled = typeof enabled === 'boolean' ? enabled : enabled.value;
         if (!isEnabled || !targetRef.value) return;
 
-        // 检查是否按住了 Shift 键（保持宽高比）
-        isMaintainingAspectRatio = maintainAspectRatio || e.shiftKey;
-
         e.preventDefault();
         e.stopPropagation();
 
-        const rect = targetRef.value.getBoundingClientRect();
-        startMouseX = e.clientX;
-        startMouseY = e.clientY;
-        startWidth = rect.width;
-        startHeight = rect.height;
-        startLeft = rect.left;
-        startTop = rect.top;
-        currentHandle = position;
-        aspectRatio = startWidth / startHeight;
+        const rect = targetRef.value.getBoundingClientRect(); // 获取元素的边界矩形
+        startMouseX = e.clientX; // 记录鼠标按下时的 x 坐标
+        startMouseY = e.clientY; // 记录鼠标按下时的 y 坐标
+        startWidth = rect.width; // 记录元素的宽度
+        startHeight = rect.height; // 记录元素的高度
+        startLeft = rect.left; // 记录元素的左边界
+        startTop = rect.top; // 记录元素的顶部边界
+        currentHandle = position; // 记录当前调整的手柄位置
 
-        isResizing.value = true;
-        activeHandle.value = position;
+        isResizing.value = true; // 设置正在调整大小
+        activeHandle.value = position; // 设置当前调整的手柄位置
 
         // 添加 will-change 优化
         if (targetRef.value) {
@@ -153,11 +144,11 @@ export function useResize(
         }
 
         // 添加全局监听
-        document.addEventListener('mousemove', handleMouseMove, { passive: false });
-        document.addEventListener('mouseup', handleMouseUp);
+        document.addEventListener('mousemove', handleMouseMove, { passive: false }); // 添加鼠标移动事件监听
+        document.addEventListener('mouseup', handleMouseUp); // 添加鼠标松开事件监听
 
         // 触发调整开始回调
-        onResizeStart?.(position);
+        onResizeStart?.(position); // 触发调整开始回调
     };
 
     /**
@@ -212,74 +203,67 @@ export function useResize(
 
         e.preventDefault();
 
-        let deltaX = e.clientX - startMouseX;
-        let deltaY = e.clientY - startMouseY;
+        let deltaX = e.clientX - startMouseX; // 计算鼠标移动的 x 距离
+        let deltaY = e.clientY - startMouseY; // 计算鼠标移动的 y 距离
 
-        let newWidth = startWidth;
-        let newHeight = startHeight;
-        let newLeft = startLeft;
-        let newTop = startTop;
+        let newWidth = startWidth; // 记录新的宽度
+        let newHeight = startHeight; // 记录新的高度
+        let newLeft = startLeft; // 记录新的左边界
+        let newTop = startTop; // 记录新的顶部边界
 
         // 获取当前的 min/max 值（支持响应式）
-        const currentMinWidth = minWidth.value;
-        const currentMaxWidth = maxWidth.value;
-        const currentMinHeight = minHeight.value;
-        const currentMaxHeight = maxHeight.value;
+        const currentMinWidth = minWidth.value; // 获取当前的最小宽度
+        const currentMaxWidth = maxWidth.value; // 获取当前的最大宽度
+        const currentMinHeight = minHeight.value; // 获取当前的最小高度
+        const currentMaxHeight = maxHeight.value; // 获取当前的最大高度
 
         // 根据手柄位置计算新尺寸，并在达到边界时阻止调整
         switch (currentHandle) {
             case 'e': // 右 - 只调整宽度
                 // 检查是否达到边界
-                deltaX = checkBoundary(deltaX, startWidth, minWidth, maxWidth);
-                newWidth = Math.max(currentMinWidth, Math.min(currentMaxWidth, startWidth + deltaX));
-                newHeight = startHeight; // 保持高度不变
+                deltaX = checkBoundary(deltaX, startWidth, minWidth, maxWidth); // 检查是否达到边界
+                newWidth = Math.max(currentMinWidth, Math.min(currentMaxWidth, startWidth + deltaX)); // 计算新的宽度
+                newHeight = startHeight; // 计算新的高度
                 break;
             case 'w': // 左 - 只调整宽度（反向调整）
                 // 检查是否达到边界（w 手柄是反向的）
-                deltaX = checkBoundary(deltaX, startWidth, minWidth, maxWidth, true);
+                deltaX = checkBoundary(deltaX, startWidth, minWidth, maxWidth, true); // 检查是否达到边界
                 // 如果允许改变位置（浮动窗体），从左侧调整
                 if (allowPositionChange) {
-                    newWidth = Math.max(currentMinWidth, Math.min(currentMaxWidth, startWidth - deltaX));
-                    newLeft = startLeft + (startWidth - newWidth);
+                    newWidth = Math.max(currentMinWidth, Math.min(currentMaxWidth, startWidth - deltaX)); // 计算新的宽度
+                    newLeft = startLeft + (startWidth - newWidth); // 计算新的左边界
                 } else {
                     // 停靠元素：从左侧调整宽度（实际上是向右扩展）
-                    newWidth = Math.max(currentMinWidth, Math.min(currentMaxWidth, startWidth - deltaX));
+                    newWidth = Math.max(currentMinWidth, Math.min(currentMaxWidth, startWidth - deltaX)); // 计算新的宽度
                 }
-                newHeight = startHeight; // 保持高度不变
+                newHeight = startHeight; // 计算新的高度
                 break;
             case 's': // 下 - 只调整高度
                 // 检查是否达到边界
-                deltaY = checkBoundary(deltaY, startHeight, minHeight, maxHeight);
-                newWidth = startWidth; // 保持宽度不变
-                newHeight = Math.max(currentMinHeight, Math.min(currentMaxHeight, startHeight + deltaY));
+                deltaY = checkBoundary(deltaY, startHeight, minHeight, maxHeight); // 检查是否达到边界
+                newWidth = startWidth; // 计算新的宽度
+                newHeight = Math.max(currentMinHeight, Math.min(currentMaxHeight, startHeight + deltaY)); // 计算新的高度
                 break;
             case 'n': // 上 - 只调整高度（反向调整）
                 // 检查是否达到边界（n 手柄是反向的）
-                deltaY = checkBoundary(deltaY, startHeight, minHeight, maxHeight, true);
+                deltaY = checkBoundary(deltaY, startHeight, minHeight, maxHeight, true); // 检查是否达到边界
                 // 如果允许改变位置（浮动窗体），从上侧调整
                 if (allowPositionChange) {
-                    newHeight = Math.max(currentMinHeight, Math.min(currentMaxHeight, startHeight - deltaY));
+                    newHeight = Math.max(currentMinHeight, Math.min(currentMaxHeight, startHeight - deltaY)); // 计算新的高度
                     newTop = startTop + (startHeight - newHeight);
                 } else {
                     // 停靠元素：从上侧调整高度（实际上是向下扩展）
-                    newHeight = Math.max(currentMinHeight, Math.min(currentMaxHeight, startHeight - deltaY));
+                    newHeight = Math.max(currentMinHeight, Math.min(currentMaxHeight, startHeight - deltaY)); // 计算新的高度
                 }
-                newWidth = startWidth; // 保持宽度不变
+                newWidth = startWidth; // 计算新的宽度
                 break;
             case 'se': // 右下 - 可同时调整宽高
                 // 检查是否达到边界
-                deltaX = checkBoundary(deltaX, startWidth, minWidth, maxWidth);
-                deltaY = checkBoundary(deltaY, startHeight, minHeight, maxHeight);
+                deltaX = checkBoundary(deltaX, startWidth, minWidth, maxWidth); // 检查是否达到边界
+                deltaY = checkBoundary(deltaY, startHeight, minHeight, maxHeight); // 检查是否达到边界
+                // 表示新的宽度不能小于最小宽度，不能大于最大宽度，并且不能小于当前宽度加上deltaX
                 newWidth = Math.max(currentMinWidth, Math.min(currentMaxWidth, startWidth + deltaX));
                 newHeight = Math.max(currentMinHeight, Math.min(currentMaxHeight, startHeight + deltaY));
-                if (isMaintainingAspectRatio) {
-                    const ratio = newWidth / newHeight;
-                    if (ratio > aspectRatio) {
-                        newHeight = Math.max(currentMinHeight, Math.min(currentMaxHeight, newWidth / aspectRatio));
-                    } else {
-                        newWidth = Math.max(currentMinWidth, Math.min(currentMaxWidth, newHeight * aspectRatio));
-                    }
-                }
                 break;
         }
 
@@ -351,7 +335,6 @@ export function useResize(
         isResizing.value = false;
         activeHandle.value = null;
         currentHandle = null;
-        isMaintainingAspectRatio = false;
     };
 
     /**

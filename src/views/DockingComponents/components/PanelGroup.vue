@@ -183,7 +183,7 @@ const allowedHandles = computed<Array<'n' | 's' | 'e' | 'w' | 'se'>>(() => {
     const position = props.containerKey || 'float';
     
     switch (position) {
-        case 'left':   // 左侧：只允许右侧和右下角手柄（宽度调整）
+        case 'left':   // 左侧：只允许右侧手柄（宽度调整）
             return ['e'];
         case 'right':  // 右侧：只允许左侧手柄（宽度调整）
             return ['w'];
@@ -386,7 +386,6 @@ const { isResizing, size, getHandles } = useResize(panelGroupRef, {
     allowPositionChange: props.containerKey === 'float',
     onSizeChange: (width, height) => {
         const position = props.containerKey || 'float';
-        
         // 根据停靠位置，只更新相应的尺寸
         switch (position) {
             case 'left':
