@@ -73,10 +73,10 @@ const panelStyle = computed(() => {
     if (position === 'float') {
         // 浮动窗体：宽高都使用
         if (props.panel.width) {
-            style.width = `${props.panel.width}px`;
+            style.width = `100%`;
         }
         if (props.panel.height) {
-            style.height = `${props.panel.height}px`;
+            style.height = `100%`;
         }
     } else if ((position === 'left' || position === 'right') && dir === 'row') {
         // 左右侧 + row 布局：只使用高度，宽度 100%
