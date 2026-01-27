@@ -30,7 +30,10 @@
             <div
                 v-show="shouldShowDropZone"
                 class="drop-zone"
-                :class="{ 'active': activePosition === `after-${index}` }"
+                :class="{ 
+                    'active': activePosition === `after-${index}`,
+                    'is-last': index === group.panels.length - 1
+                }"
                 :data-drop-zone="`after-${index}`"
             ></div>
         </template>
@@ -407,8 +410,19 @@ const { isResizing, size, getHandles } = useResize(panelGroupRef, {
     }
 });
 
-// 调整手柄配置
-const resizeHandles = computed(() => getHandles());
+// 监听拖拽状态，拖拽 tab 或 panel 时隐藏 resize-handle
+const isDraggingTabOrPanel = computed(() => {
+    const currentDrag = dragContext.getCurrentDrag().value;
+    return currentDrag && (currentDrag.type === 'tab' || currentDrag.type === 'panel');
+});
+
+// 调整手柄配置（拖拽 tab 或 panel 时隐藏）
+const resizeHandles = computed(() => {
+    if (isDraggingTabOrPanel.value) {
+        return [];
+    }
+    return getHandles();
+});
 </script>
 
 <style scoped>
@@ -417,6 +431,7 @@ const resizeHandles = computed(() => getHandles());
     display: flex;
     box-sizing: border-box;
     position: relative;
+    z-index: 100; /* PanelGroup 容器层级最低，确保子元素（Panel/Tabs）能覆盖热区 */
     /* 基础尺寸：默认 100%，但会被 groupStyle 覆盖 */
     width: 100%;
     height: 100%;
@@ -445,14 +460,15 @@ const resizeHandles = computed(() => getHandles());
     padding: 2px 5px;
     border-radius: 3px;
     pointer-events: none;
-    z-index: 10001;
+    z-index: 4001; /* 确保调整信息在调整手柄之上 */
 }
 
 /* 调整手柄基础样式 */
 .resize-handle {
     position: absolute;
     background: transparent;
-    z-index: 1000;
+    z-index: 4000; /* 确保调整手柄在所有热区之上（高于 Tabs 热区的 3002） */
+    pointer-events: auto; /* 确保能接收鼠标事件 */
 }
 
 /* 边缘手柄（上下左右） */
@@ -522,10 +538,10 @@ const resizeHandles = computed(() => getHandles());
 .drop-zone {
     background: rgba(255, 255, 255, 0);
     border-radius: 3px;
-    pointer-events: auto; /* 确保热区能接收鼠标事件 */
+    pointer-events: auto;
     transition: all 0.15s;
     position: relative;
-    z-index: 1000; /* PanelGroup 的热区优先级更高，在 PanelContainer 热区之上 */
+    z-index: 260; /* 高于 Panel (250)，但低于 Tabs (300+) */
 }
 
 /* 垂直布局（column）- 热区是水平线 */
@@ -546,6 +562,7 @@ const resizeHandles = computed(() => getHandles());
 .drop-zone.active {
     background: rgba(3, 124, 245, 0.5);
     box-shadow: 0 0 8px rgba(64, 158, 255, 0.6);
+    z-index: 2601; /* 激活时高于 Panel，但低于 Tabs 热区 (3002) */
 }
 
 /* 垂直布局激活时 */
@@ -558,5 +575,25 @@ const resizeHandles = computed(() => getHandles());
 .panel-group[style*="flex-direction: row"] .drop-zone.active {
     width: 12px;
     margin: 0 -6px;
+}
+
+/* 最后一个 Panel 后的热区 - 避免与 PanelContainer 的第一个热区重叠 */
+/* 垂直布局（column）- 热区是水平线，向上偏移 */
+.panel-group[style*="flex-direction: column"] .drop-zone.is-last {
+    transform: translateY(-6px);
+}
+
+/* 水平布局（row）- 热区是垂直线，向左偏移 */
+.panel-group[style*="flex-direction: row"] .drop-zone.is-last {
+    transform: translateX(-6px);
+}
+
+/* 最后一个 Panel 后的热区激活时 */
+.panel-group[style*="flex-direction: column"] .drop-zone.is-last.active {
+    transform: translateY(-6px);
+}
+
+.panel-group[style*="flex-direction: row"] .drop-zone.is-last.active {
+    transform: translateX(-6px);
 }
 </style>

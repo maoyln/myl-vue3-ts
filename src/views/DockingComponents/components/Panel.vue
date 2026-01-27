@@ -3,27 +3,20 @@
     <div 
         ref="panelRef"
         class="panel"
-        :class="{ 'is-dragging': isDragging, 'is-resizing': isResizing }"
+        :class="{ 'is-resizing': isResizing }"
         :style="panelStyle"
     >
-        <!-- Panel 标题（如果有 tabs 则不显示，由 Tabs 组件管理） -->
-        <div v-if="!panel.tabs || panel.tabs.length === 0" class="panel-name">
-            {{ panel.name }}
-        </div>
 
         <!-- Tabs 组件（如果有 tabs） -->
         <Tabs
             v-if="panel.tabs && panel.tabs.length > 0"
             :tabs="panel.tabs"
-            :default-active-id="panel.tabs[0]?.id"
-            :closable="false"
+            :default-active-id="panel.tabs?.[0]?.id"
+            :closable="true"
+            :panel-id="panel.id"
+            :panel-data="panel"
             @tab-change="handleTabChange"
         />
-        
-        <!-- 拖拽信息 -->
-        <div class="drag-info" v-if="isDragging">
-            Position: ({{ Math.round(position.x) }}, {{ Math.round(position.y) }})
-        </div>
 
         <!-- 调整大小信息 -->
         <div v-if="isResizing" class="resize-info">
@@ -39,9 +32,9 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useDrag } from '../useDrag';
 import { useResize } from '../useResize';
 import { useDockStore } from '../useDockStore';
+import { useDragContext } from '../useDragContext';
 import Tabs from './Tabs.vue';
 
 const props = defineProps<{
@@ -55,23 +48,6 @@ const store = useDockStore();
 
 // 面板引用
 const panelRef = ref<HTMLElement | null>(null);
-
-// 使用拖拽 hooks
-// 悬浮状态下可以拖拽移动位置，但不会触发热区和吸附功能（由 PanelGroup 控制热区）
-const { position, isDragging } = useDrag(panelRef, {
-    id: props.panel.id,
-    type: 'panel',
-    data: props.panel,
-    onDragStart: () => {
-        console.log('拖拽开始', props.panel.name);
-    },
-    onDragging: () => {
-        // 可以在这里处理拖拽中的逻辑
-    },
-    onDragEnd: () => {
-        console.log('拖拽结束', props.panel.name);
-    }
-});
 
 // 计算 Panel 的样式
 // 规则：
@@ -278,10 +254,21 @@ const { isResizing, size, getHandles } = useResize(panelRef, {
     }
 });
 
-// 调整手柄配置（只有非最后一个 panel 才显示手柄）
+// 监听拖拽状态，拖拽 tab 或 panel 时隐藏 resize-handle
+const dragContext = useDragContext();
+const isDraggingTabOrPanel = computed(() => {
+    const currentDrag = dragContext.getCurrentDrag().value;
+    return currentDrag && (currentDrag.type === 'tab' || currentDrag.type === 'panel');
+});
+
+// 调整手柄配置（只有非最后一个 panel 才显示手柄，且拖拽 tab 或 panel 时隐藏）
 const resizeHandles = computed(() => {
     // 最后一个 panel 不需要调整大小手柄（它会自动填满剩余空间）
     if (props.isLast) {
+        return [];
+    }
+    // 拖拽 tab 或 panel 时隐藏 resize-handle
+    if (isDraggingTabOrPanel.value) {
         return [];
     }
     return getHandles();
@@ -298,9 +285,9 @@ const handleTabChange = (tabId: string) => {
 .panel {
     outline: 1px solid #ccc;
     background: #fff;
-    cursor: move;
     user-select: none;
     position: relative;
+    z-index: 250; /* 确保 Panel 在 PanelGroup 之上，但低于 Tabs */
     transition: box-shadow 0.2s, outline-color 0.2s, opacity 0.2s;
     /* 性能优化 */
     transform: translate3d(0, 0, 0);
@@ -308,7 +295,7 @@ const handleTabChange = (tabId: string) => {
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    /* overflow: hidden; */
 }
 
 .panel-name {
@@ -320,18 +307,11 @@ const handleTabChange = (tabId: string) => {
     flex-shrink: 0;
 }
 
-.panel:hover {
-    outline-color: #409eff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
 .panel.is-dragging {
     opacity: 0.8;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-    z-index: 10000; /* 非常高的层级，确保在所有元素之上（包括浮动窗体） */
     transition: none;
     pointer-events: none;
-    position: relative;
 }
 
 .panel.is-resizing {
@@ -364,14 +344,15 @@ const handleTabChange = (tabId: string) => {
     padding: 2px 5px;
     border-radius: 3px;
     pointer-events: none;
-    z-index: 10001;
+    z-index: 4001; /* 确保调整信息在调整手柄之上 */
 }
 
 /* 调整手柄基础样式 */
 .resize-handle {
     position: absolute;
     background: transparent;
-    z-index: 1000;
+    z-index: 4000; /* 确保调整手柄在所有热区之上（高于 Tabs 热区的 3002） */
+    pointer-events: auto; /* 确保能接收鼠标事件 */
 }
 
 /* 边缘手柄 */

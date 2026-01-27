@@ -2,7 +2,7 @@ import { useDockStore } from './useDockStore';
 import { useDragContext } from './useDragContext';
 import type { DropPosition } from './useDropZone';
 
-export type DropScenario = 'panelGroup' | 'panelContainer' | 'emptySpace';
+export type DropScenario = 'panelGroup' | 'panelContainer' | 'tabs' | 'emptySpace';
 
 export interface DropInfo {
   scenario: DropScenario;
@@ -42,36 +42,79 @@ class DragDropHandler {
   /**
    * 统一处理拖拽放置
    */
-  private handleDrop(prevDrag: { id: string; type: string }) {
+  private handleDrop(prevDrag: { id: string; type: string; data?: any }) {
     // 防止重复执行
-    if (this.dropHandled || prevDrag.type !== 'panel') {
+    if (this.dropHandled) {
       this.reset();
       return;
     }
 
     this.dropHandled = true;
-    const panelId = prevDrag.id;
 
-    // 有激活的热区，执行热区放置
-    if (this.activeDropZone) {
-      const { scenario, position, targetId, targetData } = this.activeDropZone;
+    // 处理 tab 类型的拖拽
+    if (prevDrag.type === 'tab') {
+      const tabId = prevDrag.id;
+      const tabData = prevDrag.data; // tab 数据
 
-      if (scenario === 'panelGroup') {
-        // 移动到 PanelGroup 的指定位置
-        const { insertIndex } = this.parsePosition(position as string);
-        this.store.movePanelToGroup(panelId, targetId, insertIndex);
-      } else if (scenario === 'panelContainer') {
-        // 在 Container 中创建新 Group
-        const containerKey = targetData?.containerKey || 'left';
-        const direction = targetData?.direction || 'column';
-        const { insertIndex } = this.parsePosition(position as string);
-        this.store.createGroupInContainer(panelId, containerKey, insertIndex, direction);
+      // 有激活的热区，执行热区放置
+      if (this.activeDropZone) {
+        const { scenario, position, targetId, targetData } = this.activeDropZone;
+
+        if (scenario === 'panelGroup') {
+          // 在 PanelGroup 中创建新 Panel（包含这个 tab）
+          const { insertIndex } = this.parsePosition(position as string);
+          this.store.createPanelFromTab(tabId, tabData, targetId, insertIndex);
+        } else if (scenario === 'panelContainer') {
+          // 在 Container 中创建新 Group 和 Panel（包含这个 tab）
+          const containerKey = targetData?.containerKey || 'left';
+          const direction = targetData?.direction || 'column';
+          const { insertIndex } = this.parsePosition(position as string);
+          this.store.createGroupFromTab(tabId, tabData, containerKey, insertIndex, direction);
+        } else if (scenario === 'tabs') {
+          // 将 tab 插入到指定 Panel 的 tabs 数组的指定位置
+          const targetPanelId = targetData?.panelId;
+          const { insertIndex } = this.parsePosition(position as string);
+          if (targetPanelId) {
+            this.store.insertTabToPanel(tabId, tabData, targetPanelId, insertIndex);
+          }
+        }
+      } 
+      // 没有激活的热区，创建浮动窗口
+      else if (this.dropPosition) {
+        this.store.createFloatWindowFromTab(tabId, tabData, this.dropPosition.x, this.dropPosition.y);
       }
-    } 
-    // 没有激活的热区，创建浮动窗口
-    else if (this.dropPosition) {
-      console.log(this.dropPosition, 'this.dropPosition')
-      this.store.createFloatWindow(panelId, this.dropPosition.x, this.dropPosition.y);
+    }
+    // 处理 panel 类型的拖拽
+    else if (prevDrag.type === 'panel') {
+      const panelId = prevDrag.id;
+
+      // 有激活的热区，执行热区放置
+      if (this.activeDropZone) {
+        const { scenario, position, targetId, targetData } = this.activeDropZone;
+
+        if (scenario === 'panelGroup') {
+          // 移动到 PanelGroup 的指定位置
+          const { insertIndex } = this.parsePosition(position as string);
+          this.store.movePanelToGroup(panelId, targetId, insertIndex);
+        } else if (scenario === 'panelContainer') {
+          // 在 Container 中创建新 Group
+          const containerKey = targetData?.containerKey || 'left';
+          const direction = targetData?.direction || 'column';
+          const { insertIndex } = this.parsePosition(position as string);
+          this.store.createGroupInContainer(panelId, containerKey, insertIndex, direction);
+        } else if (scenario === 'tabs') {
+          // 将 panel 的所有 tabs 合并到目标 Panel
+          const targetPanelId = targetData?.panelId;
+          const { insertIndex } = this.parsePosition(position as string);
+          if (targetPanelId && panelId !== targetPanelId) {
+            this.store.mergePanelTabsToPanel(panelId, targetPanelId, insertIndex);
+          }
+        }
+      } 
+      // 没有激活的热区，创建浮动窗口
+      else if (this.dropPosition) {
+        this.store.createFloatWindow(panelId, this.dropPosition.x, this.dropPosition.y);
+      }
     }
 
     // 使用双重 requestAnimationFrame 确保 DOM 更新完成后再重置
@@ -126,7 +169,7 @@ class DragDropHandler {
       // 使用双重 requestAnimationFrame 确保在热区的 onDrop 回调执行后再处理
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          this.handleDrop({ id: prevDrag.id, type: prevDrag.type });
+          this.handleDrop({ id: prevDrag.id, type: prevDrag.type, data: prevDrag.data });
         });
       });
     });

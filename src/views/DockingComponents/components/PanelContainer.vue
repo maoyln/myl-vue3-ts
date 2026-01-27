@@ -10,7 +10,10 @@
                 <div 
                     v-show="index === 0 && shouldShowDropZone"
                     class="drop-zone-container"
-                    :class="{ 'active': activePosition === `before-${index}` }"
+                    :class="{ 
+                        'active': activePosition === `before-${index}`,
+                        'is-first': true
+                    }"
                     :data-drop-zone="`before-${index}`"
                 ></div>
 
@@ -216,10 +219,10 @@ watch(() => props.container, () => {
 .drop-zone-container {
     background: rgba(255, 255, 255, 0);
     border-radius: 3px;
-    pointer-events: auto; /* 确保热区能接收鼠标事件 */
+    pointer-events: auto;
     transition: all 0.15s;
     position: relative;
-    z-index: 999; /* PanelContainer 的热区优先级较低，在 PanelGroup 热区之下 */
+    z-index: 100; /* 优先级最低 */
 }
 
 /* 水平布局（row）- 热区是垂直线 */
@@ -240,6 +243,7 @@ watch(() => props.container, () => {
 .drop-zone-container.active {
     background: rgba(103, 194, 58, 0.5);
     box-shadow: 0 0 10px rgba(103, 194, 58, 0.6);
+    z-index: 1001; /* 激活时优先级最低 */
 }
 
 /* 水平布局激活时 */
@@ -252,6 +256,26 @@ watch(() => props.container, () => {
 .dock-layout-item[style*="flex-direction: column"] .drop-zone-container.active {
     height: 16px;
     margin: -8px 0;
+}
+
+/* 第一个 PanelGroup 前的热区 - 避免与 PanelGroup 的最后一个热区重叠 */
+/* 水平布局（row）- 热区是垂直线，向左偏移（向上移动，远离 PanelGroup 的最后一个热区） */
+.dock-layout-item[style*="flex-direction: row"] .drop-zone-container.is-first {
+    transform: translateX(0);
+}
+
+/* 垂直布局（column）- 热区是水平线，向上偏移（向左移动，远离 PanelGroup 的最后一个热区） */
+.dock-layout-item[style*="flex-direction: column"] .drop-zone-container.is-first {
+    transform: translateY(0);
+}
+
+/* 第一个 PanelGroup 前的热区激活时 */
+.dock-layout-item[style*="flex-direction: row"] .drop-zone-container.is-first.active {
+    transform: translateX(0);
+}
+
+.dock-layout-item[style*="flex-direction: column"] .drop-zone-container.is-first.active {
+    transform: translateY(0);
 }
 
 </style>

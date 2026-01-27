@@ -3,7 +3,7 @@ import { ref } from 'vue';
 /** 拖拽信息 */
 export interface DragInfo {
     id: string;
-    type: 'panel' | 'panelGroup';
+    type: 'panel' | 'panelGroup' | 'tab';
     data: any;
 }
 

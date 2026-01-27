@@ -112,14 +112,11 @@ export const useDockStore = defineStore('dock', {
       
       // 查找目标 group
       let targetGroup: PanelGroup | null = null;
-      let targetContainer: Container | null = null;
-      let targetFloatGroup: FloatPanelGroup | null = null;
       
       // 在固定容器中查找
       for (const container of Object.values(this.dockContainers)) {
         targetGroup = container.groups.find(g => g.id === targetGroupId) || null;
         if (targetGroup) {
-          targetContainer = container;
           break;
         }
       }
@@ -129,7 +126,6 @@ export const useDockStore = defineStore('dock', {
         for (const floatGroup of this.floatPanelGroups) {
           targetGroup = floatGroup.groups.find(g => g.id === targetGroupId) || null;
           if (targetGroup) {
-            targetFloatGroup = floatGroup;
             break;
           }
         }
@@ -382,6 +378,569 @@ export const useDockStore = defineStore('dock', {
       };
       
       this.floatPanelGroups.push(newFloatGroup);
+    },
+
+    /**
+     * 从 tab 创建新的 panel，并添加到指定的 PanelGroup
+     */
+    createPanelFromTab(
+      tabId: string,
+      tabData: any,
+      targetGroupId: string,
+      targetIndex: number
+    ) {
+      // 1. 查找 tab 所在的 panel
+      const panelLocation = this.findPanelLocation(tabData.panelId);
+      if (!panelLocation) {
+        console.error('未找到 tab 所在的 panel:', tabData.panelId);
+        return;
+      }
+
+      let sourcePanel: Panel | null = null;
+      if (panelLocation.type === 'container') {
+        const container = this.dockContainers[panelLocation.containerKey];
+        const group = container.groups.find(g => g.id === panelLocation.groupId);
+        sourcePanel = group?.panels[panelLocation.panelIndex] || null;
+      } else {
+        const floatGroup = this.floatPanelGroups.find(f => f.id === panelLocation.floatGroupId);
+        const group = floatGroup?.groups.find(g => g.id === panelLocation.groupId);
+        sourcePanel = group?.panels[panelLocation.panelIndex] || null;
+      }
+
+      if (!sourcePanel || !sourcePanel.tabs) {
+        console.error('未找到源 panel 或 panel 没有 tabs');
+        return;
+      }
+
+      // 2. 从源 panel 中移除这个 tab
+      const tabIndex = sourcePanel.tabs.findIndex((t: any) => t.id === tabId);
+      if (tabIndex === -1) {
+        console.error('未找到 tab:', tabId);
+        return;
+      }
+
+      const tab = sourcePanel.tabs.splice(tabIndex, 1)[0];
+
+      // 如果移除后 panel 没有 tabs 了，删除该 panel
+      if (sourcePanel.tabs.length === 0) {
+        if (panelLocation.type === 'container') {
+          const container = this.dockContainers[panelLocation.containerKey];
+          const group = container.groups.find(g => g.id === panelLocation.groupId);
+          if (group) {
+            group.panels.splice(panelLocation.panelIndex, 1);
+            // 如果移除后 group 为空，删除该 group
+            if (group.panels.length === 0) {
+              const groupIndex = container.groups.findIndex(g => g.id === panelLocation.groupId);
+              if (groupIndex !== -1) {
+                container.groups.splice(groupIndex, 1);
+              }
+            }
+          }
+        } else {
+          const floatGroup = this.floatPanelGroups.find(f => f.id === panelLocation.floatGroupId);
+          const group = floatGroup?.groups.find(g => g.id === panelLocation.groupId);
+          if (group) {
+            group.panels.splice(panelLocation.panelIndex, 1);
+            // 如果移除后 group 为空，删除该 group
+            if (group.panels.length === 0) {
+              const gIndex = floatGroup!.groups.findIndex(g => g.id === panelLocation.groupId);
+              if (gIndex !== -1) {
+                floatGroup!.groups.splice(gIndex, 1);
+              }
+              // 如果浮动窗体没有 group 了，删除整个浮动窗体
+              if (floatGroup!.groups.length === 0) {
+                const floatIndex = this.floatPanelGroups.findIndex(f => f.id === panelLocation.floatGroupId);
+                if (floatIndex !== -1) {
+                  this.floatPanelGroups.splice(floatIndex, 1);
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // 3. 创建新的 panel（只包含这个 tab）
+      const newPanel: Panel = {
+        id: `panel_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
+        name: tabData.title || '新面板',
+        width: sourcePanel.width || 200,
+        height: sourcePanel.height || 150,
+        originalWidth: sourcePanel.originalWidth || 200,
+        originalHeight: sourcePanel.originalHeight || 150,
+        minWidth: sourcePanel.minWidth || 100,
+        minHeight: sourcePanel.minHeight || 80,
+        maxWidth: sourcePanel.maxWidth || 800,
+        maxHeight: sourcePanel.maxHeight || 400,
+        tabs: [tab]
+      };
+
+      // 4. 查找目标 group 并插入 panel
+      let targetGroup: PanelGroup | null = null;
+      
+      // 在固定容器中查找
+      for (const container of Object.values(this.dockContainers)) {
+        targetGroup = container.groups.find(g => g.id === targetGroupId) || null;
+        if (targetGroup) {
+          targetGroup.panels.splice(targetIndex, 0, newPanel);
+          return;
+        }
+      }
+      
+      // 在浮动窗体中查找
+      for (const floatGroup of this.floatPanelGroups) {
+        targetGroup = floatGroup.groups.find(g => g.id === targetGroupId) || null;
+        if (targetGroup) {
+          targetGroup.panels.splice(targetIndex, 0, newPanel);
+          return;
+        }
+      }
+
+      console.error('未找到目标 group:', targetGroupId);
+    },
+
+    /**
+     * 从 tab 创建新的 group 和 panel，并添加到指定的 Container
+     */
+    createGroupFromTab(
+      tabId: string,
+      tabData: any,
+      containerKey: string,
+      groupIndex: number,
+      direction: 'row' | 'column' = 'column'
+    ) {
+      // 1. 查找 tab 所在的 panel
+      const panelLocation = this.findPanelLocation(tabData.panelId);
+      if (!panelLocation) {
+        console.error('未找到 tab 所在的 panel:', tabData.panelId);
+        return;
+      }
+
+      let sourcePanel: Panel | null = null;
+      if (panelLocation.type === 'container') {
+        const container = this.dockContainers[panelLocation.containerKey];
+        const group = container.groups.find(g => g.id === panelLocation.groupId);
+        sourcePanel = group?.panels[panelLocation.panelIndex] || null;
+      } else {
+        const floatGroup = this.floatPanelGroups.find(f => f.id === panelLocation.floatGroupId);
+        const group = floatGroup?.groups.find(g => g.id === panelLocation.groupId);
+        sourcePanel = group?.panels[panelLocation.panelIndex] || null;
+      }
+
+      if (!sourcePanel || !sourcePanel.tabs) {
+        console.error('未找到源 panel 或 panel 没有 tabs');
+        return;
+      }
+
+      // 2. 从源 panel 中移除这个 tab
+      const tabIndex = sourcePanel.tabs.findIndex((t: any) => t.id === tabId);
+      if (tabIndex === -1) {
+        console.error('未找到 tab:', tabId);
+        return;
+      }
+
+      const tab = sourcePanel.tabs.splice(tabIndex, 1)[0];
+
+      // 如果移除后 panel 没有 tabs 了，删除该 panel
+      if (sourcePanel.tabs.length === 0) {
+        if (panelLocation.type === 'container') {
+          const container = this.dockContainers[panelLocation.containerKey];
+          const group = container.groups.find(g => g.id === panelLocation.groupId);
+          if (group) {
+            group.panels.splice(panelLocation.panelIndex, 1);
+            // 如果移除后 group 为空，删除该 group
+            if (group.panels.length === 0) {
+              const groupIndex = container.groups.findIndex(g => g.id === panelLocation.groupId);
+              if (groupIndex !== -1) {
+                container.groups.splice(groupIndex, 1);
+              }
+            }
+          }
+        } else {
+          const floatGroup = this.floatPanelGroups.find(f => f.id === panelLocation.floatGroupId);
+          const group = floatGroup?.groups.find(g => g.id === panelLocation.groupId);
+          if (group) {
+            group.panels.splice(panelLocation.panelIndex, 1);
+            // 如果移除后 group 为空，删除该 group
+            if (group.panels.length === 0) {
+              const gIndex = floatGroup!.groups.findIndex(g => g.id === panelLocation.groupId);
+              if (gIndex !== -1) {
+                floatGroup!.groups.splice(gIndex, 1);
+              }
+              // 如果浮动窗体没有 group 了，删除整个浮动窗体
+              if (floatGroup!.groups.length === 0) {
+                const floatIndex = this.floatPanelGroups.findIndex(f => f.id === panelLocation.floatGroupId);
+                if (floatIndex !== -1) {
+                  this.floatPanelGroups.splice(floatIndex, 1);
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // 3. 创建新的 panel（只包含这个 tab）
+      const newPanel: Panel = {
+        id: `panel_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
+        name: tabData.title || '新面板',
+        width: sourcePanel.width || 200,
+        height: sourcePanel.height || 150,
+        originalWidth: sourcePanel.originalWidth || 200,
+        originalHeight: sourcePanel.originalHeight || 150,
+        minWidth: sourcePanel.minWidth || 100,
+        minHeight: sourcePanel.minHeight || 80,
+        maxWidth: sourcePanel.maxWidth || 800,
+        maxHeight: sourcePanel.maxHeight || 400,
+        tabs: [tab]
+      };
+
+      // 4. 创建新的 group
+      const newGroup: PanelGroup = {
+        id: `group_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
+        direction,
+        width: 200,
+        height: 200,
+        panels: [newPanel],
+      };
+      
+      // 5. 插入到目标 container
+      const targetContainer = this.dockContainers[containerKey];
+      if (targetContainer) {
+        targetContainer.groups.splice(groupIndex, 0, newGroup);
+      } else {
+        console.error('未找到目标 container:', containerKey);
+      }
+    },
+
+    /**
+     * 从 tab 创建新的浮动窗口
+     */
+    createFloatWindowFromTab(
+      tabId: string,
+      tabData: any,
+      x: number,
+      y: number,
+      width: number = 300,
+      height: number = 400
+    ) {
+      // 1. 查找 tab 所在的 panel
+      const panelLocation = this.findPanelLocation(tabData.panelId);
+      if (!panelLocation) {
+        console.error('未找到 tab 所在的 panel:', tabData.panelId);
+        return;
+      }
+
+      let sourcePanel: Panel | null = null;
+      if (panelLocation.type === 'container') {
+        const container = this.dockContainers[panelLocation.containerKey];
+        const group = container.groups.find(g => g.id === panelLocation.groupId);
+        sourcePanel = group?.panels[panelLocation.panelIndex] || null;
+      } else {
+        const floatGroup = this.floatPanelGroups.find(f => f.id === panelLocation.floatGroupId);
+        const group = floatGroup?.groups.find(g => g.id === panelLocation.groupId);
+        sourcePanel = group?.panels[panelLocation.panelIndex] || null;
+      }
+
+      if (!sourcePanel || !sourcePanel.tabs) {
+        console.error('未找到源 panel 或 panel 没有 tabs');
+        return;
+      }
+
+      // 2. 从源 panel 中移除这个 tab
+      const tabIndex = sourcePanel.tabs.findIndex((t: any) => t.id === tabId);
+      if (tabIndex === -1) {
+        console.error('未找到 tab:', tabId);
+        return;
+      }
+
+      const tab = sourcePanel.tabs.splice(tabIndex, 1)[0];
+
+      // 如果移除后 panel 没有 tabs 了，删除该 panel
+      if (sourcePanel.tabs.length === 0) {
+        if (panelLocation.type === 'container') {
+          const container = this.dockContainers[panelLocation.containerKey];
+          const group = container.groups.find(g => g.id === panelLocation.groupId);
+          if (group) {
+            group.panels.splice(panelLocation.panelIndex, 1);
+            // 如果移除后 group 为空，删除该 group
+            if (group.panels.length === 0) {
+              const groupIndex = container.groups.findIndex(g => g.id === panelLocation.groupId);
+              if (groupIndex !== -1) {
+                container.groups.splice(groupIndex, 1);
+              }
+            }
+          }
+        } else {
+          const floatGroup = this.floatPanelGroups.find(f => f.id === panelLocation.floatGroupId);
+          const group = floatGroup?.groups.find(g => g.id === panelLocation.groupId);
+          if (group) {
+            group.panels.splice(panelLocation.panelIndex, 1);
+            // 如果移除后 group 为空，删除该 group
+            if (group.panels.length === 0) {
+              const gIndex = floatGroup!.groups.findIndex(g => g.id === panelLocation.groupId);
+              if (gIndex !== -1) {
+                floatGroup!.groups.splice(gIndex, 1);
+              }
+              // 如果浮动窗体没有 group 了，删除整个浮动窗体
+              if (floatGroup!.groups.length === 0) {
+                const floatIndex = this.floatPanelGroups.findIndex(f => f.id === panelLocation.floatGroupId);
+                if (floatIndex !== -1) {
+                  this.floatPanelGroups.splice(floatIndex, 1);
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // 3. 创建新的 panel（只包含这个 tab）
+      const newPanel: Panel = {
+        id: `panel_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
+        name: tabData.title || '新面板',
+        width: width,
+        height: height,
+        originalWidth: width,
+        originalHeight: height,
+        minWidth: sourcePanel.minWidth || 100,
+        minHeight: sourcePanel.minHeight || 80,
+        maxWidth: sourcePanel.maxWidth || 800,
+        maxHeight: sourcePanel.maxHeight || 400,
+        tabs: [tab]
+      };
+
+      // 4. 创建新的 group
+      const newGroup: PanelGroup = {
+        id: `group_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
+        direction: 'column',
+        width: width,
+        height: height,
+        panels: [newPanel],
+      };
+
+      // 5. 创建新的浮动窗体
+      const newFloatGroup: FloatPanelGroup = {
+        id: `float_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
+        position: 'float',
+        x,
+        y,
+        groups: [newGroup],
+      };
+      
+      this.floatPanelGroups.push(newFloatGroup);
+    },
+
+    /**
+     * 将 tab 插入到指定 Panel 的 tabs 数组的指定位置
+     */
+    insertTabToPanel(
+      tabId: string,
+      tabData: any,
+      targetPanelId: string,
+      insertIndex: number
+    ) {
+      // 1. 查找 tab 所在的 panel
+      const panelLocation = this.findPanelLocation(tabData.panelId);
+      if (!panelLocation) {
+        console.error('未找到 tab 所在的 panel:', tabData.panelId);
+        return;
+      }
+
+      let sourcePanel: Panel | null = null;
+      if (panelLocation.type === 'container') {
+        const container = this.dockContainers[panelLocation.containerKey];
+        const group = container.groups.find(g => g.id === panelLocation.groupId);
+        sourcePanel = group?.panels[panelLocation.panelIndex] || null;
+      } else {
+        const floatGroup = this.floatPanelGroups.find(f => f.id === panelLocation.floatGroupId);
+        const group = floatGroup?.groups.find(g => g.id === panelLocation.groupId);
+        sourcePanel = group?.panels[panelLocation.panelIndex] || null;
+      }
+
+      if (!sourcePanel || !sourcePanel.tabs) {
+        console.error('未找到源 panel 或 panel 没有 tabs');
+        return;
+      }
+
+      // 2. 从源 panel 中移除这个 tab
+      const tabIndex = sourcePanel.tabs.findIndex((t: any) => t.id === tabId);
+      if (tabIndex === -1) {
+        console.error('未找到 tab:', tabId);
+        return;
+      }
+
+      const tab = sourcePanel.tabs.splice(tabIndex, 1)[0];
+
+      // 如果移除后 panel 没有 tabs 了，删除该 panel
+      if (sourcePanel.tabs.length === 0) {
+        if (panelLocation.type === 'container') {
+          const container = this.dockContainers[panelLocation.containerKey];
+          const group = container.groups.find(g => g.id === panelLocation.groupId);
+          if (group) {
+            group.panels.splice(panelLocation.panelIndex, 1);
+            // 如果移除后 group 为空，删除该 group
+            if (group.panels.length === 0) {
+              const groupIndex = container.groups.findIndex(g => g.id === panelLocation.groupId);
+              if (groupIndex !== -1) {
+                container.groups.splice(groupIndex, 1);
+              }
+            }
+          }
+        } else {
+          const floatGroup = this.floatPanelGroups.find(f => f.id === panelLocation.floatGroupId);
+          const group = floatGroup?.groups.find(g => g.id === panelLocation.groupId);
+          if (group) {
+            group.panels.splice(panelLocation.panelIndex, 1);
+            // 如果移除后 group 为空，删除该 group
+            if (group.panels.length === 0) {
+              const gIndex = floatGroup!.groups.findIndex(g => g.id === panelLocation.groupId);
+              if (gIndex !== -1) {
+                floatGroup!.groups.splice(gIndex, 1);
+              }
+              // 如果浮动窗体没有 group 了，删除整个浮动窗体
+              if (floatGroup!.groups.length === 0) {
+                const floatIndex = this.floatPanelGroups.findIndex(f => f.id === panelLocation.floatGroupId);
+                if (floatIndex !== -1) {
+                  this.floatPanelGroups.splice(floatIndex, 1);
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // 3. 查找目标 panel
+      const targetLocation = this.findPanelLocation(targetPanelId);
+      if (!targetLocation) {
+        console.error('未找到目标 panel:', targetPanelId);
+        return;
+      }
+
+      let targetPanel: Panel | null = null;
+      if (targetLocation.type === 'container') {
+        const container = this.dockContainers[targetLocation.containerKey];
+        const group = container.groups.find(g => g.id === targetLocation.groupId);
+        targetPanel = group?.panels[targetLocation.panelIndex] || null;
+      } else {
+        const floatGroup = this.floatPanelGroups.find(f => f.id === targetLocation.floatGroupId);
+        const group = floatGroup?.groups.find(g => g.id === targetLocation.groupId);
+        targetPanel = group?.panels[targetLocation.panelIndex] || null;
+      }
+
+      if (!targetPanel) {
+        console.error('未找到目标 panel:', targetPanelId);
+        return;
+      }
+
+      // 4. 如果目标 panel 没有 tabs 数组，创建一个
+      if (!targetPanel.tabs) {
+        targetPanel.tabs = [];
+      }
+
+      // 5. 将 tab 插入到指定位置
+      // 如果插入位置超出范围，插入到末尾
+      const safeInsertIndex = Math.min(insertIndex, targetPanel.tabs.length);
+      targetPanel.tabs.splice(safeInsertIndex, 0, tab);
+    },
+
+    /**
+     * 将源 Panel 的所有 tabs 合并到目标 Panel
+     */
+    mergePanelTabsToPanel(
+      sourcePanelId: string,
+      targetPanelId: string,
+      insertIndex: number
+    ) {
+      // 1. 查找源 panel
+      const sourceLocation = this.findPanelLocation(sourcePanelId);
+      if (!sourceLocation) {
+        console.error('未找到源 panel:', sourcePanelId);
+        return;
+      }
+
+      let sourcePanel: Panel | null = null;
+      if (sourceLocation.type === 'container') {
+        const container = this.dockContainers[sourceLocation.containerKey];
+        const group = container.groups.find(g => g.id === sourceLocation.groupId);
+        sourcePanel = group?.panels[sourceLocation.panelIndex] || null;
+      } else {
+        const floatGroup = this.floatPanelGroups.find(f => f.id === sourceLocation.floatGroupId);
+        const group = floatGroup?.groups.find(g => g.id === sourceLocation.groupId);
+        sourcePanel = group?.panels[sourceLocation.panelIndex] || null;
+      }
+
+      if (!sourcePanel || !sourcePanel.tabs || sourcePanel.tabs.length === 0) {
+        console.error('源 panel 不存在或没有 tabs');
+        return;
+      }
+
+      // 2. 查找目标 panel
+      const targetLocation = this.findPanelLocation(targetPanelId);
+      if (!targetLocation) {
+        console.error('未找到目标 panel:', targetPanelId);
+        return;
+      }
+
+      let targetPanel: Panel | null = null;
+      if (targetLocation.type === 'container') {
+        const container = this.dockContainers[targetLocation.containerKey];
+        const group = container.groups.find(g => g.id === targetLocation.groupId);
+        targetPanel = group?.panels[targetLocation.panelIndex] || null;
+      } else {
+        const floatGroup = this.floatPanelGroups.find(f => f.id === targetLocation.floatGroupId);
+        const group = floatGroup?.groups.find(g => g.id === targetLocation.groupId);
+        targetPanel = group?.panels[targetLocation.panelIndex] || null;
+      }
+
+      if (!targetPanel) {
+        console.error('未找到目标 panel:', targetPanelId);
+        return;
+      }
+
+      // 3. 如果目标 panel 没有 tabs 数组，创建一个
+      if (!targetPanel.tabs) {
+        targetPanel.tabs = [];
+      }
+
+      // 4. 将所有 tabs 插入到目标 panel
+      const tabsToMove = [...sourcePanel.tabs];
+      const safeInsertIndex = Math.min(insertIndex, targetPanel.tabs.length);
+      targetPanel.tabs.splice(safeInsertIndex, 0, ...tabsToMove);
+
+      // 5. 删除源 panel（因为所有 tabs 已移走）
+      sourcePanel.tabs = [];
+      if (sourceLocation.type === 'container') {
+        const container = this.dockContainers[sourceLocation.containerKey];
+        const group = container.groups.find(g => g.id === sourceLocation.groupId);
+        if (group) {
+          group.panels.splice(sourceLocation.panelIndex, 1);
+          // 如果移除后 group 为空，删除该 group
+          if (group.panels.length === 0) {
+            const groupIndex = container.groups.findIndex(g => g.id === sourceLocation.groupId);
+            if (groupIndex !== -1) {
+              container.groups.splice(groupIndex, 1);
+            }
+          }
+        }
+      } else {
+        const floatGroup = this.floatPanelGroups.find(f => f.id === sourceLocation.floatGroupId);
+        const group = floatGroup?.groups.find(g => g.id === sourceLocation.groupId);
+        if (group) {
+          group.panels.splice(sourceLocation.panelIndex, 1);
+          // 如果移除后 group 为空，删除该 group
+          if (group.panels.length === 0) {
+            const gIndex = floatGroup!.groups.findIndex(g => g.id === sourceLocation.groupId);
+            if (gIndex !== -1) {
+              floatGroup!.groups.splice(gIndex, 1);
+            }
+            // 如果浮动窗体没有 group 了，删除整个浮动窗体
+            if (floatGroup!.groups.length === 0) {
+              const floatIndex = this.floatPanelGroups.findIndex(f => f.id === sourceLocation.floatGroupId);
+              if (floatIndex !== -1) {
+                this.floatPanelGroups.splice(floatIndex, 1);
+              }
+            }
+          }
+        }
+      }
     },
 
     /**

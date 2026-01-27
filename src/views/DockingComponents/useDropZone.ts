@@ -3,7 +3,7 @@ import type { Ref, MaybeRef } from 'vue';
 import { useDragContext } from './useDragContext';
 
 /** 热区位置类型 */
-export type DropPosition = 'before' | 'after' | 'center' | 'top' | 'right' | 'bottom' | 'left';
+export type DropPosition = 'before' | 'after' | 'center' | 'top' | 'right' | 'bottom' | 'left' | `${'before' | 'after'}-${number}`;
 
 /** 热区配置 */
 export interface DropZoneOptions {

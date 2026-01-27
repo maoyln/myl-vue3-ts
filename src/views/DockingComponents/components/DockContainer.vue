@@ -3,13 +3,13 @@
     <div ref="containerRef" class="dock-container" @mouseup="handleMouseUp" @mousemove="handleMouseMove">
         <div class="dock-layout">
             <!-- 布局容器 -->
-             <!-- <div class="dock-left">
+             <div class="dock-left">
                 <PanelContainer :container="dockContainers.left" direction="row" containerKey="left" />
-             </div> -->
+             </div>
              <div class="dock-middle">
-                <!-- <div class="dock-top">
+                <div class="dock-top">
                     <PanelContainer :container="dockContainers.top" direction="column" containerKey="top" />
-                </div> -->
+                </div>
                 <div class="dock-content">
                     <slot></slot>
                 </div>
@@ -74,7 +74,7 @@ function handleMouseUp(_e: MouseEvent) {
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 1000;
+    z-index: 500; /* 降低z-index，避免遮挡拖拽元素 */
     pointer-events: none; /* 允许点击穿透到下层 */
 }
 
@@ -86,6 +86,7 @@ function handleMouseUp(_e: MouseEvent) {
     /* 宽度由内容撑开（PanelGroup 的 width） */
     height: 100%;
     box-sizing: border-box;
+    border-right: 1px solid #ccc;
 }
 
 .dock-middle {
