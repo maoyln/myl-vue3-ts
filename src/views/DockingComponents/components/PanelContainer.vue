@@ -287,14 +287,14 @@ watch(() => props.container, () => {
 .dock-layout-item[style*="flex-direction: row"] .drop-zone-container.active {
     width: 16px;
     margin: 0 -8px;
-    transform: translateX(4px);
+    /* transform: translateX(4px); */
 }
 
 /* 垂直布局激活时 */
 .dock-layout-item[style*="flex-direction: column"] .drop-zone-container.active {
     height: 16px;
     margin: -8px 0;
-    transform: translateY(4px);
+    /* transform: translateY(4px); */
 }
 
 /* 第一个 PanelGroup 前的热区 - 避免与 PanelGroup 的最后一个热区重叠 */
@@ -317,9 +317,17 @@ watch(() => props.container, () => {
     transform: translateY(0);
 }
 
-/* 空容器热区与 (34-39) 一致：8px + 负 margin，不占显示空间；沿用 .drop-zone-container 的 row/column 规则即可 */
+/* 空容器热区与 (34-39) 一致：8px + 负 margin，不占显示空间；水平/竖直各 4px 偏移 */
 .dock-layout-item .drop-zone-empty {
     flex: none;
+}
+
+.dock-layout-item[style*="flex-direction: row"] .drop-zone-empty {
+    transform: translateX(4px);
+}
+
+.dock-layout-item[style*="flex-direction: column"] .drop-zone-empty {
+    transform: translateY(4px);
 }
 
 .float-item .drop-zone-empty {
