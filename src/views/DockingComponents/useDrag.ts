@@ -172,8 +172,12 @@ export function useDrag(targetRef: Ref<HTMLElement | null>, options: UseDragOpti
                 currentY = ghostY;
             }
 
-            // 通知全局拖拽上下文（只有真正拖拽时才调用）
-            dragContext.startDrag({ id, type, data });
+            // 通知全局拖拽上下文（只有真正拖拽时才调用）；注入点击相对元素的偏移，供浮窗落点“抓住的那点”保持 under 鼠标
+            dragContext.startDrag({
+              id,
+              type,
+              data: { ...(typeof data === 'object' && data !== null ? data : {}), dragOffset: { x: offsetX, y: offsetY } },
+            });
 
             // 触发拖拽开始回调
             onDragStart?.({ x: currentX, y: currentY });

@@ -79,9 +79,12 @@ class DragDropHandler {
           }
         }
       } 
-      // 没有激活的热区，创建浮动窗口
+      // 没有激活的热区，创建浮动窗口；落点 = 鼠标释放位置 - 按下时相对拖拽元素的偏移，使“抓住的那点”仍在鼠标下
       else if (this.dropPosition) {
-        this.store.createFloatWindowFromTab(tabId, tabData, this.dropPosition.x, this.dropPosition.y);
+        const off = prevDrag.data?.dragOffset;
+        const x = off ? this.dropPosition.x - off.x : this.dropPosition.x;
+        const y = off ? this.dropPosition.y - off.y : this.dropPosition.y;
+        this.store.createFloatWindowFromTab(tabId, tabData, x, y);
       }
     }
     // 处理 panel 类型的拖拽
@@ -111,9 +114,12 @@ class DragDropHandler {
           }
         }
       } 
-      // 没有激活的热区，创建浮动窗口
+      // 没有激活的热区，创建浮动窗口；落点 = 鼠标释放位置 - 按下时相对拖拽元素的偏移，使“抓住的那点”仍在鼠标下
       else if (this.dropPosition) {
-        this.store.createFloatWindow(panelId, this.dropPosition.x, this.dropPosition.y);
+        const off = prevDrag.data?.dragOffset;
+        const x = off ? this.dropPosition.x - off.x : this.dropPosition.x;
+        const y = off ? this.dropPosition.y - off.y : this.dropPosition.y;
+        this.store.createFloatWindow(panelId, x, y);
       }
     }
 

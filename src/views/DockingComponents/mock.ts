@@ -518,4 +518,12 @@ export const mockData = {
         // },
     ],
 
-}
+};
+
+/** 停靠布局全局配置 */
+export const dockConfig = {
+  /** 从非浮窗拖出创建新浮窗时的默认宽度 */
+  defaultFloatWindowWidth: 320,
+  /** 从非浮窗拖出创建新浮窗时的默认高度 */
+  defaultFloatWindowHeight: 240,
+};

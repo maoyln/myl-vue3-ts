@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { mockData } from './mock';
+import { mockData, dockConfig } from './mock';
 
 // 类型定义
 export interface Panel {
@@ -301,30 +301,35 @@ export const useDockStore = defineStore('dock', {
     
     /**
      * 创建新的浮动窗体
+     * 若原来在浮窗内（仅移动位置），保留原浮窗宽高；若从非浮窗拖出，使用 dockConfig 默认宽高
      */
-    createFloatWindow(
-      panelId: string,
-      x: number,
-      y: number,
-      width: number = 300,
-      height: number = 400
-    ) {
-      // 1. 查找并移除原位置的 panel
+    createFloatWindow(panelId: string, x: number, y: number) {
       const location = this.findPanelLocation(panelId);
       if (!location) {
         console.error('未找到 panel:', panelId);
         return;
       }
-      
+
+      // 先确定新浮窗宽高：原浮窗则沿用原 group 宽高，否则用配置默认值
+      let width = dockConfig.defaultFloatWindowWidth;
+      let height = dockConfig.defaultFloatWindowHeight;
+      if (location.type === 'float') {
+        const fg = this.floatPanelGroups.find(f => f.id === location.floatGroupId);
+        const grp = fg?.groups.find(g => g.id === location.groupId);
+        if (grp && (grp.width != null || grp.height != null)) {
+          width = grp.width ?? width;
+          height = grp.height ?? height;
+        }
+      }
+
       let panel: Panel;
-      
+
       if (location.type === 'container') {
         const container = this.dockContainers[location.containerKey];
         const group = container.groups.find(g => g.id === location.groupId);
         if (group) {
           panel = group.panels.splice(location.panelIndex, 1)[0];
-          
-          // 如果移除后 group 为空，删除该 group
+
           if (group.panels.length === 0) {
             const groupIndex = container.groups.findIndex(g => g.id === location.groupId);
             if (groupIndex !== -1) {
@@ -339,15 +344,12 @@ export const useDockStore = defineStore('dock', {
         const group = floatGroup?.groups.find(g => g.id === location.groupId);
         if (group) {
           panel = group.panels.splice(location.panelIndex, 1)[0];
-          
-          // 如果移除后 group 为空，删除该 group
+
           if (group.panels.length === 0) {
             const gIndex = floatGroup!.groups.findIndex(g => g.id === location.groupId);
             if (gIndex !== -1) {
               floatGroup!.groups.splice(gIndex, 1);
             }
-            
-            // 如果浮动窗体没有 group 了，删除整个浮动窗体
             if (floatGroup!.groups.length === 0) {
               const floatIndex = this.floatPanelGroups.findIndex(f => f.id === location.floatGroupId);
               if (floatIndex !== -1) {
@@ -359,8 +361,7 @@ export const useDockStore = defineStore('dock', {
           return;
         }
       }
-      
-      // 2. 创建新的浮动窗体
+
       const newFloatGroup: FloatPanelGroup = {
         id: `float_panel_group_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
         position: 'float',
@@ -376,7 +377,7 @@ export const useDockStore = defineStore('dock', {
           },
         ],
       };
-      
+
       this.floatPanelGroups.push(newFloatGroup);
     },
 
@@ -614,19 +615,27 @@ export const useDockStore = defineStore('dock', {
     /**
      * 从 tab 创建新的浮动窗口
      */
-    createFloatWindowFromTab(
-      tabId: string,
-      tabData: any,
-      x: number,
-      y: number,
-      width: number = 300,
-      height: number = 400
-    ) {
-      // 1. 查找 tab 所在的 panel
+    /**
+     * 从 tab 创建新的浮动窗口
+     * 若原来在浮窗内（仅移动位置），保留原浮窗宽高；若从非浮窗拖出，使用 dockConfig 默认宽高
+     */
+    createFloatWindowFromTab(tabId: string, tabData: any, x: number, y: number) {
       const panelLocation = this.findPanelLocation(tabData.panelId);
       if (!panelLocation) {
         console.error('未找到 tab 所在的 panel:', tabData.panelId);
         return;
+      }
+
+      // 先确定新浮窗宽高：原浮窗则沿用原 group 宽高，否则用配置默认值
+      let width = dockConfig.defaultFloatWindowWidth;
+      let height = dockConfig.defaultFloatWindowHeight;
+      if (panelLocation.type === 'float') {
+        const fg = this.floatPanelGroups.find(f => f.id === panelLocation.floatGroupId);
+        const grp = fg?.groups.find(g => g.id === panelLocation.groupId);
+        if (grp && (grp.width != null || grp.height != null)) {
+          width = grp.width ?? width;
+          height = grp.height ?? height;
+        }
       }
 
       let sourcePanel: Panel | null = null;
