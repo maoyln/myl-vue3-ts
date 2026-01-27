@@ -1,33 +1,43 @@
 <!-- 容器布局壳子 -->
 <template>
     <div ref="containerRef" class="dock-layout">
-        <!-- 单个容器 -->
-        <div v-if="!Array.isArray(container)" class="dock-layout-item" :style="layoutDirectionStyle">
-            <!-- 动态渲染 PanelGroup 和热区 -->
-            <template v-for="(group, index) in container.groups" :key="group.id">
-                <!-- 第一个 PanelGroup 前的热区 -->
-                 <!-- v-show="index === 0 && shouldShowDropZone" -->
-                <div 
-                    v-show="index === 0 && shouldShowDropZone"
-                    class="drop-zone-container"
-                    :class="{ 
-                        'active': activePosition === `before-${index}`,
-                        'is-first': true
-                    }"
-                    :data-drop-zone="`before-${index}`"
-                ></div>
+        <!-- 单个容器：空时热区与 (34-39) 同款 8px+负 margin，不占显示空间 -->
+        <div
+            v-if="!Array.isArray(container)"
+            class="dock-layout-item"
+            :class="{ 'is-empty': isEmpty }"
+            :style="layoutDirectionStyle"
+        >
+            <!-- groups 为空或 null 时：仅显示一个占满的 before-0 热区 -->
+            <div
+                v-if="!(container.groups && container.groups.length > 0)"
+                v-show="shouldShowDropZone"
+                class="drop-zone-container drop-zone-empty"
+                :class="{ 'active': activePosition === 'before-0' }"
+                :data-drop-zone="'before-0'"
+            ></div>
+            <!-- groups 有内容时：动态渲染 PanelGroup 和热区 -->
+            <template v-else>
+                <template v-for="(group, index) in container.groups" :key="group.id">
+                    <div
+                        v-show="index === 0 && shouldShowDropZone"
+                        class="drop-zone-container"
+                        :class="{
+                            'active': activePosition === `before-${index}`,
+                            'is-first': true
+                        }"
+                        :data-drop-zone="`before-${index}`"
+                    ></div>
 
-                <!-- PanelGroup 组件 -->
-                <PanelGroup :group="group" :direction="direction" :containerKey="containerKey" />
+                    <PanelGroup :group="group" :direction="direction" :containerKey="containerKey" />
 
-                <!-- 每个 PanelGroup 后的热区 -->
-                <!-- v-show="shouldShowDropZone" -->
-                <div
-                    v-show="shouldShowDropZone"
-                    class="drop-zone-container"
-                    :class="{ 'active': activePosition === `after-${index}` }"
-                    :data-drop-zone="`after-${index}`"
-                ></div>
+                    <div
+                        v-show="shouldShowDropZone"
+                        class="drop-zone-container"
+                        :class="{ 'active': activePosition === `after-${index}` }"
+                        :data-drop-zone="`after-${index}`"
+                    ></div>
+                </template>
             </template>
         </div>
 
@@ -39,27 +49,31 @@
                 class="float-item"
                 :style="getFloatItemStyle(item)"
             >
-                <!-- 动态渲染 PanelGroup 和热区 -->
-                <template v-for="(group, index) in item.groups" :key="group.id">
-                    <!-- 第一个 PanelGroup 前的热区 -->
-                     <!-- v-show="index === 0 && shouldShowDropZone" -->
-                    <div 
-                        v-show="index === 0 && shouldShowDropZone"
-                        class="drop-zone-container"
-                        :class="{ 'active': activePosition === `${item.id}-before-${index}` }"
-                        :data-drop-zone="`${item.id}-before-${index}`"
-                    ></div>
-                    <!-- PanelGroup 组件 -->
-                    <PanelGroup :group="group" :direction="direction" containerKey="float" />
-
-                    <!-- 每个 PanelGroup 后的热区 -->
-                     <!-- v-show="shouldShowDropZone" -->
-                    <div 
-                        v-show="shouldShowDropZone"
-                        class="drop-zone-container"
-                        :class="{ 'active': activePosition === `${item.id}-after-${index}` }"
-                        :data-drop-zone="`${item.id}-after-${index}`"
-                    ></div>
+                <!-- item.groups 为空或 null 时：仅显示一个占满的 before-0 热区 -->
+                <div
+                    v-if="!(item.groups && item.groups.length > 0)"
+                    v-show="shouldShowDropZone"
+                    class="drop-zone-container drop-zone-empty"
+                    :class="{ 'active': activePosition === `${item.id}-before-0` }"
+                    :data-drop-zone="`${item.id}-before-0`"
+                ></div>
+                <!-- item.groups 有内容时：动态渲染 PanelGroup 和热区 -->
+                <template v-else>
+                    <template v-for="(group, index) in item.groups" :key="group.id">
+                        <div
+                            v-show="index === 0 && shouldShowDropZone"
+                            class="drop-zone-container"
+                            :class="{ 'active': activePosition === `${item.id}-before-${index}` }"
+                            :data-drop-zone="`${item.id}-before-${index}`"
+                        ></div>
+                        <PanelGroup :group="group" :direction="direction" containerKey="float" />
+                        <div
+                            v-show="shouldShowDropZone"
+                            class="drop-zone-container"
+                            :class="{ 'active': activePosition === `${item.id}-after-${index}` }"
+                            :data-drop-zone="`${item.id}-after-${index}`"
+                        ></div>
+                    </template>
                 </template>
             </div>
         </div>
@@ -81,6 +95,13 @@ const props = defineProps<{
 
 const layoutDirectionStyle = computed(() => {
     return props.direction === 'row' ? 'flex-direction: row;' : 'flex-direction: column;';
+});
+
+// 单个容器 groups 为空时，保证轨道有最小尺寸，热区可显示且可悬停
+const isEmpty = computed(() => {
+    if (Array.isArray(props.container)) return false;
+    const g = props.container?.groups;
+    return !g || g.length === 0;
 });
 
 // 计算浮动窗体的样式
@@ -114,30 +135,29 @@ const containerRef = ref<HTMLElement | null>(null);
 const dragDrop = useDragDrop();
 const dragContext = useDragContext();
 
-// 动态生成允许的热区位置
+// 动态生成允许的热区位置（groups 为空或 null 时也包含 before-0，便于拖入）
 const allowedPositions = computed(() => {
     const positions: string[] = [];
-    
+
     if (Array.isArray(props.container)) {
-        // 浮动窗体
-        props.container.forEach(item => {
+        props.container.forEach((item: any) => {
+            positions.push(`${item.id}-before-0`);
             if (item.groups && item.groups.length > 0) {
-                positions.push(`${item.id}-before-0`);
                 for (let i = 0; i < item.groups.length; i++) {
                     positions.push(`${item.id}-after-${i}`);
                 }
             }
         });
-    } else if (props.container.groups) {
-        // 单个容器
-        if (props.container.groups.length > 0) {
-            positions.push('before-0');
-            for (let i = 0; i < props.container.groups.length; i++) {
+    } else if (props.container) {
+        positions.push('before-0');
+        const groups = props.container.groups;
+        if (groups && groups.length > 0) {
+            for (let i = 0; i < groups.length; i++) {
                 positions.push(`after-${i}`);
             }
         }
     }
-    
+
     return positions;
 });
 
@@ -197,6 +217,23 @@ watch(() => props.container, () => {
     min-height: 0;
 }
 
+/* 空容器：轨道仅 8px（与热区 strip 同宽），负 margin 后 net 0，不占显示空间；溢出可见 */
+.dock-layout-item.is-empty {
+    overflow: visible;
+}
+
+.dock-layout-item.is-empty[style*="flex-direction: row"] {
+    width: 8px;
+    min-width: 8px;
+    margin: 0 -4px;
+}
+
+.dock-layout-item.is-empty[style*="flex-direction: column"] {
+    height: 8px;
+    min-height: 8px;
+    margin: -4px 0;
+}
+
 /* 浮动窗体容器 */
 .dock-layout-float {
     position: relative;
@@ -250,12 +287,14 @@ watch(() => props.container, () => {
 .dock-layout-item[style*="flex-direction: row"] .drop-zone-container.active {
     width: 16px;
     margin: 0 -8px;
+    transform: translateX(4px);
 }
 
 /* 垂直布局激活时 */
 .dock-layout-item[style*="flex-direction: column"] .drop-zone-container.active {
     height: 16px;
     margin: -8px 0;
+    transform: translateY(4px);
 }
 
 /* 第一个 PanelGroup 前的热区 - 避免与 PanelGroup 的最后一个热区重叠 */
@@ -276,6 +315,17 @@ watch(() => props.container, () => {
 
 .dock-layout-item[style*="flex-direction: column"] .drop-zone-container.is-first.active {
     transform: translateY(0);
+}
+
+/* 空容器热区与 (34-39) 一致：8px + 负 margin，不占显示空间；沿用 .drop-zone-container 的 row/column 规则即可 */
+.dock-layout-item .drop-zone-empty {
+    flex: none;
+}
+
+.float-item .drop-zone-empty {
+    flex: 1;
+    min-width: 60px;
+    min-height: 40px;
 }
 
 </style>

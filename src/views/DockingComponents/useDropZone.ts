@@ -220,9 +220,11 @@ export function useDropZone(
     // 监听拖拽状态，动态初始化热区
     watch(() => dragContext.getCurrentDrag().value, (drag, prevDrag) => {
         if (drag && drag.id !== id) {
-            // 拖拽开始且不是自己被拖拽，等待 DOM 更新后初始化热区
+            // 拖拽开始且不是自己被拖拽：nextTick 等待 v-show 等 DOM 更新，再 rAF 确保重绘后再注册（空容器热区需此时已显示）
             nextTick(() => {
-                initDropZones();
+                requestAnimationFrame(() => {
+                    initDropZones();
+                });
             });
         } else if (!drag && prevDrag) {
             // 拖拽结束，使用 requestAnimationFrame 等待 DOM 渲染完成后再重新初始化

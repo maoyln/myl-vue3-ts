@@ -4,62 +4,62 @@ export const mockData = {
             id: 'container_left',
             position: 'left',
             groups: [
-                {
-                    id: 'group_left_01',
-                    direction: 'row',
-                    width: 200,
-                    height: 200,
-                    panels: [
-                        { 
-                            id: 'panel_left_11', 
-                            name: '面板-left11',
-                            width: 200,
-                            height: 150,
-                            originalWidth: 200,
-                            originalHeight: 150,
-                            minWidth: 100,
-                            minHeight: 80,
-                            maxWidth: 800,
-                            maxHeight: 400,
-                            tabs: [
-                                { id: 'tab_left_11_1', title: '标签L11-1', component: 'PanelRight01' },
-                                { id: 'tab_left_11_2', title: '标签L11-2', component: 'PanelRight02' }
-                            ]
-                        },
-                        { 
-                            id: 'panel_left_12', 
-                            name: '面板-left12',
-                            width: 200,
-                            height: 150,
-                            originalWidth: 200,
-                            originalHeight: 150,
-                            minWidth: 100,
-                            minHeight: 80,
-                            maxWidth: 800,
-                            maxHeight: 400,
-                            tabs: [
-                                { id: 'tab_left_12_1', title: '标签L12-1', component: 'PanelRight01' },
-                                { id: 'tab_left_12_2', title: '标签L12-2', component: 'PanelRight02' }
-                            ]
-                        },
-                        { 
-                            id: 'panel_left_13', 
-                            name: '面板-left13',
-                            width: 200,
-                            height: 150,
-                            originalWidth: 200,
-                            originalHeight: 150,
-                            minWidth: 100,
-                            minHeight: 80,
-                            maxWidth: 800,
-                            maxHeight: 400,
-                            tabs: [
-                                { id: 'tab_left_13_1', title: '标签L13-1', component: 'PanelRight01' },
-                                { id: 'tab_left_13_2', title: '标签L13-2', component: 'PanelRight02' }
-                            ]
-                        },
-                    ],
-                },
+                // {
+                //     id: 'group_left_01',
+                //     direction: 'row',
+                //     width: 200,
+                //     height: 200,
+                //     panels: [
+                //         { 
+                //             id: 'panel_left_11', 
+                //             name: '面板-left11',
+                //             width: 200,
+                //             height: 150,
+                //             originalWidth: 200,
+                //             originalHeight: 150,
+                //             minWidth: 100,
+                //             minHeight: 80,
+                //             maxWidth: 800,
+                //             maxHeight: 400,
+                //             tabs: [
+                //                 { id: 'tab_left_11_1', title: '标签L11-1', component: 'PanelRight01' },
+                //                 { id: 'tab_left_11_2', title: '标签L11-2', component: 'PanelRight02' }
+                //             ]
+                //         },
+                //         { 
+                //             id: 'panel_left_12', 
+                //             name: '面板-left12',
+                //             width: 200,
+                //             height: 150,
+                //             originalWidth: 200,
+                //             originalHeight: 150,
+                //             minWidth: 100,
+                //             minHeight: 80,
+                //             maxWidth: 800,
+                //             maxHeight: 400,
+                //             tabs: [
+                //                 { id: 'tab_left_12_1', title: '标签L12-1', component: 'PanelRight01' },
+                //                 { id: 'tab_left_12_2', title: '标签L12-2', component: 'PanelRight02' }
+                //             ]
+                //         },
+                //         { 
+                //             id: 'panel_left_13', 
+                //             name: '面板-left13',
+                //             width: 200,
+                //             height: 150,
+                //             originalWidth: 200,
+                //             originalHeight: 150,
+                //             minWidth: 100,
+                //             minHeight: 80,
+                //             maxWidth: 800,
+                //             maxHeight: 400,
+                //             tabs: [
+                //                 { id: 'tab_left_13_1', title: '标签L13-1', component: 'PanelRight01' },
+                //                 { id: 'tab_left_13_2', title: '标签L13-2', component: 'PanelRight02' }
+                //             ]
+                //         },
+                //     ],
+                // },
                 
                 // {
                 //     id: 'group_left_03',
@@ -271,62 +271,62 @@ export const mockData = {
             id: 'container_top',
             position: 'top',
             groups: [
-                {
-                    id: 'group_top_01',
-                    direction: 'column',
-                    width: 200,
-                    height: 200,
-                    panels: [
-                        { 
-                            id: 'panel_top_11', 
-                            name: '面板-top11',
-                            width: 200,
-                            height: 150,
-                            originalWidth: 200,
-                            originalHeight: 150,
-                            minWidth: 100,
-                            minHeight: 80,
-                            maxWidth: 800,
-                            maxHeight: 400,
-                            tabs: [
-                                { id: 'tab_top_11_1', title: '标签T11-1', component: 'PanelRight01' },
-                                { id: 'tab_top_11_2', title: '标签T11-2', component: 'PanelRight02' }
-                            ]
-                        },
-                        { 
-                            id: 'panel_top_12', 
-                            name: '面板-top12',
-                            width: 200,
-                            height: 150,
-                            originalWidth: 200,
-                            originalHeight: 150,
-                            minWidth: 100,
-                            minHeight: 80,
-                            maxWidth: 800,
-                            maxHeight: 400,
-                            tabs: [
-                                { id: 'tab_top_12_1', title: '标签T12-1', component: 'PanelRight01' },
-                                { id: 'tab_top_12_2', title: '标签T12-2', component: 'PanelRight02' }
-                            ]
-                        },
-                        // { 
-                        //     id: 'panel_top_13', 
-                        //     name: '面板-top13',
-                        //     width: 200,
-                        //     height: 150,
-                        //     originalWidth: 200,
-                        //     originalHeight: 150,
-                        //     minWidth: 100,
-                        //     minHeight: 80,
-                        //     maxWidth: 800,
-                        //     maxHeight: 400,
-                        //     tabs: [
-                        //         { id: 'tab_top_13_1', title: '标签T13-1', component: 'PanelRight01' },
-                        //         { id: 'tab_top_13_2', title: '标签T13-2', component: 'PanelRight02' }
-                        //     ]
-                        // },
-                    ],
-                },
+                // {
+                //     id: 'group_top_01',
+                //     direction: 'column',
+                //     width: 200,
+                //     height: 200,
+                //     panels: [
+                //         { 
+                //             id: 'panel_top_11', 
+                //             name: '面板-top11',
+                //             width: 200,
+                //             height: 150,
+                //             originalWidth: 200,
+                //             originalHeight: 150,
+                //             minWidth: 100,
+                //             minHeight: 80,
+                //             maxWidth: 800,
+                //             maxHeight: 400,
+                //             tabs: [
+                //                 { id: 'tab_top_11_1', title: '标签T11-1', component: 'PanelRight01' },
+                //                 { id: 'tab_top_11_2', title: '标签T11-2', component: 'PanelRight02' }
+                //             ]
+                //         },
+                //         { 
+                //             id: 'panel_top_12', 
+                //             name: '面板-top12',
+                //             width: 200,
+                //             height: 150,
+                //             originalWidth: 200,
+                //             originalHeight: 150,
+                //             minWidth: 100,
+                //             minHeight: 80,
+                //             maxWidth: 800,
+                //             maxHeight: 400,
+                //             tabs: [
+                //                 { id: 'tab_top_12_1', title: '标签T12-1', component: 'PanelRight01' },
+                //                 { id: 'tab_top_12_2', title: '标签T12-2', component: 'PanelRight02' }
+                //             ]
+                //         },
+                //         // { 
+                //         //     id: 'panel_top_13', 
+                //         //     name: '面板-top13',
+                //         //     width: 200,
+                //         //     height: 150,
+                //         //     originalWidth: 200,
+                //         //     originalHeight: 150,
+                //         //     minWidth: 100,
+                //         //     minHeight: 80,
+                //         //     maxWidth: 800,
+                //         //     maxHeight: 400,
+                //         //     tabs: [
+                //         //         { id: 'tab_top_13_1', title: '标签T13-1', component: 'PanelRight01' },
+                //         //         { id: 'tab_top_13_2', title: '标签T13-2', component: 'PanelRight02' }
+                //         //     ]
+                //         // },
+                //     ],
+                // },
             ],
         },
         bottom: {
