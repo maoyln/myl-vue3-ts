@@ -147,13 +147,13 @@ export const mockData = {
                             id: 'panel_right_11', 
                             name: '面板-right11',
                             width: 200, // 面板宽度
-                            height: 150, // 面板高度
+                            height: 250, // 面板高度
                             originalWidth: 200, // 面板原始宽度
                             originalHeight: 150, // 面板原始高度
                             minWidth: 100, // 面板最小宽度
                             minHeight: 80, // 面板最小高度
                             maxWidth: 800, // 面板最大宽度
-                            maxHeight: 400, // 面板最大高度
+                            maxHeight: 600, // 面板最大高度
                             tabs: [
                                 { id: 'tab_right_01', title: '标签1', component: 'PanelRight01' },
                                 { id: 'tab_right_02', title: '标签2', component: 'PanelRight02' }

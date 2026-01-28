@@ -5,7 +5,6 @@
         <div 
             ref="tabsHeaderRef"
             class="tabs-header"
-            :class="{ 'is-dragging': isDraggingPanel }"
         >
             <!-- 第一个 Tab 前的热区 -->
             <div
@@ -25,7 +24,6 @@
                     class="tab-header-item"
                     :class="{ 
                         'is-active': activeTabId === tab.id,
-                        'is-dragging': isDraggingTab === tab.id
                     }"
                     @click="setActiveTab(tab.id)"
                 >
@@ -107,7 +105,6 @@ const dragContext = useDragContext();
 const activeTabId = ref<string>(props.defaultActiveId || (props.tabs?.length > 0 ? props.tabs[0].id : ''));
 
 // 拖拽状态
-const isDraggingPanel = ref(false);
 const isDraggingTab = ref<string | null>(null);
 
 // 动态生成允许的热区位置
@@ -271,7 +268,7 @@ const initTabDrags = () => {
 
 // 使用拖拽 hooks - 绑定到标题栏区域（拖拽整个 panel）
 // 注意：只在标题栏空白区域触发，tab-item 的拖拽会阻止冒泡
-const { isDragging: isDraggingPanelState } = useDrag(tabsHeaderRef, {
+const {} = useDrag(tabsHeaderRef, {
     id: props.panelId || props.tabs?.[0]?.id || '',
     type: 'panel',
     data: props.panelData || props.tabs,
@@ -284,21 +281,14 @@ const { isDragging: isDraggingPanelState } = useDrag(tabsHeaderRef, {
         return true;
     },
     onDragStart: () => {
-        isDraggingPanel.value = true;
         console.log('拖拽整个 panel 开始', props.panelData?.name || props.tabs?.[0]?.title);
     },
     onDragging: () => {
         // 可以在这里处理拖拽中的逻辑
     },
     onDragEnd: () => {
-        isDraggingPanel.value = false;
         console.log('拖拽整个 panel 结束', props.panelData?.name || props.tabs?.[0]?.title);
     }
-});
-
-// 监听拖拽状态
-watch(isDraggingPanelState, (val) => {
-    isDraggingPanel.value = val;
 });
 
 // 监听 tabs 变化，重新初始化热区和拖拽
@@ -407,11 +397,6 @@ onUnmounted(() => {
     overflow: hidden;
 }
 
-.tabs-header.is-dragging {
-    opacity: 0.8;
-    /* cursor: move; */
-}
-
 /* flex: 0 0 auto 保持按内容宽度，拖拽时热区出现/消失不会导致 item 被重新分配宽度 */
 .tab-header-item {
     flex: 0 0 auto;
@@ -434,12 +419,6 @@ onUnmounted(() => {
     background-color: #fff;
     color: #409eff;
     border-bottom: 2px solid #409eff;
-}
-
-.tab-header-item.is-dragging {
-    opacity: 0.8;
-    /* cursor: move; */
-    background-color: #e0f0ff;
 }
 
 .tab-title {

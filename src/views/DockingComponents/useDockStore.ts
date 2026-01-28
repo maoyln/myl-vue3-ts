@@ -58,7 +58,6 @@ export const useDockStore = defineStore('dock', {
      * 根据 panelId 查找 panel 所在的位置信息
      */
     findPanelLocation: (state) => (panelId: string) => {
-      console.log('findPanelLocation---111', state.dockContainers);
       // 在固定容器中查找
       for (const [containerKey, container] of Object.entries(state.dockContainers)) {
         for (const group of container.groups) {
@@ -76,8 +75,6 @@ export const useDockStore = defineStore('dock', {
         }
       }
       
-      console.log('findPanelLocation---222', state.floatPanelGroups);
-
       // 在浮动窗体中查找
       for (const floatGroup of state.floatPanelGroups) {
         for (const group of floatGroup.groups) {

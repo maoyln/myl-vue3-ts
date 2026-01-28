@@ -267,9 +267,13 @@ export function useResize(
                 break;
         }
 
-        // 确保尺寸在限制范围内（双重检查）
-        newWidth = Math.max(currentMinWidth, Math.min(currentMaxWidth, newWidth));
-        newHeight = Math.max(currentMinHeight, Math.min(currentMaxHeight, newHeight));
+        console.log(newWidth, newHeight, 'newWidth, newHeight---222222')
+        console.log(currentMinWidth, currentMaxWidth, 'currentMinWidth, currentMaxWidth---222222')
+        console.log(currentMinHeight, currentMaxHeight, 'currentMinHeight, currentMaxHeight---222222')
+
+        // 确保尺寸在限制范围内
+        // newWidth = Math.max(currentMinWidth, Math.min(currentMaxWidth, newWidth));
+        // newHeight = Math.max(currentMinHeight, Math.min(currentMaxHeight, newHeight));
 
         // 直接操作 DOM，性能优化
         // 注意：只更新实际改变的尺寸，避免不必要的样式更新
@@ -301,6 +305,8 @@ export function useResize(
 
         // 更新响应式数据（用于显示）
         size.value = { width: newWidth, height: newHeight };
+
+        console.log(size.value, 'size.value---1')
 
         // 触发调整中回调
         onResizing?.(newWidth, newHeight, currentHandle);

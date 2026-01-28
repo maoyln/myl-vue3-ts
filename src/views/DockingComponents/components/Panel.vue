@@ -85,6 +85,8 @@ const panelStyle = computed(() => {
             // 非最后一个 panel 使用指定高度
             style.height = `${props.panel.height}px`;
         }
+
+        console.log(style, 'style1111-----left')
         // 最后一个 panel 的高度由 flex: 1 自动填满
     } else if ((position === 'top' || position === 'bottom') && dir === 'column') {
         // 上下侧 + column 布局：只使用宽度，高度 100%
