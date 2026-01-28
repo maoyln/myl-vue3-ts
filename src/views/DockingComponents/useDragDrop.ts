@@ -79,12 +79,17 @@ class DragDropHandler {
           }
         }
       } 
-      // 没有激活的热区，创建浮动窗口；落点 = 鼠标释放位置 - 按下时相对拖拽元素的偏移，使“抓住的那点”仍在鼠标下
+      // 没有激活的热区：若已是整窗跟随（floatGroupId）则只移动该浮窗；否则创建新浮动窗口。落点 = 鼠标释放位置 - 按下时相对偏移，使“抓住的那点”仍在鼠标下
       else if (this.dropPosition) {
         const off = prevDrag.data?.dragOffset;
         const x = off ? this.dropPosition.x - off.x : this.dropPosition.x;
         const y = off ? this.dropPosition.y - off.y : this.dropPosition.y;
-        this.store.createFloatWindowFromTab(tabId, tabData, x, y);
+        const floatGroupId = prevDrag.data?.floatGroupId;
+        if (floatGroupId) {
+          this.store.moveFloatWindow(floatGroupId, x, y);
+        } else {
+          this.store.createFloatWindowFromTab(tabId, tabData, x, y);
+        }
       }
     }
     // 处理 panel 类型的拖拽
@@ -114,12 +119,17 @@ class DragDropHandler {
           }
         }
       } 
-      // 没有激活的热区，创建浮动窗口；落点 = 鼠标释放位置 - 按下时相对拖拽元素的偏移，使“抓住的那点”仍在鼠标下
+      // 没有激活的热区：若来自浮窗内则只移动该浮窗；否则创建新浮动窗口。落点 = 鼠标释放位置 - 按下时相对偏移，使“抓住的那点”仍在鼠标下
       else if (this.dropPosition) {
         const off = prevDrag.data?.dragOffset;
         const x = off ? this.dropPosition.x - off.x : this.dropPosition.x;
         const y = off ? this.dropPosition.y - off.y : this.dropPosition.y;
-        this.store.createFloatWindow(panelId, x, y);
+        const floatGroupId = prevDrag.data?.floatGroupId;
+        if (floatGroupId) {
+          this.store.moveFloatWindow(floatGroupId, x, y);
+        } else {
+          this.store.createFloatWindow(panelId, x, y);
+        }
       }
     }
 

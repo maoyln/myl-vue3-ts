@@ -1,6 +1,7 @@
 import { ref, watch, nextTick } from 'vue';
 import type { Ref } from 'vue';
 import { useDragContext } from './useDragContext';
+import { useDockStore } from './useDockStore';
 
 interface Position {
     x: number;
@@ -57,51 +58,6 @@ export function useDrag(targetRef: Ref<HTMLElement | null>, options: UseDragOpti
     let hasStartedDrag = false;
     // 拖拽阈值（像素），超过这个距离才认为是拖拽
     const DRAG_THRESHOLD = 5;
-    // 拖拽预览元素（ghost element）
-    let ghostElement: HTMLElement | null = null;
-    // 原元素的原始透明度
-    let originalOpacity: string = '';
-
-    /**
-     * 创建拖拽预览元素
-     */
-    const createGhostElement = (sourceElement: HTMLElement, x: number, y: number): HTMLElement => {
-        const rect = sourceElement.getBoundingClientRect();
-        const ghost = sourceElement.cloneNode(true) as HTMLElement;
-        const computed = window.getComputedStyle(sourceElement);
-        const s = ghost.style;
-        
-        // 复制所有计算后的样式
-        for (let i = 0; i < computed.length; i++) {
-            s.setProperty(computed[i], computed.getPropertyValue(computed[i]));
-        }
-        
-        // 覆盖定位样式
-        Object.assign(s, {
-            position: 'fixed',
-            top: `${y}px`,
-            left: `${x}px`,
-            width: `${rect.width}px`,
-            height: `${rect.height}px`,
-            margin: '0',
-            zIndex: '10000',
-            pointerEvents: 'none',
-            opacity: '0.8',
-            transform: 'none',
-            transition: 'none'
-        });
-        
-        document.body.appendChild(ghost);
-        return ghost;
-    };
-
-    /**
-     * 移除拖拽预览元素
-     */
-    const removeGhostElement = () => {
-        ghostElement?.remove();
-        ghostElement = null;
-    };
 
     /**
      * 鼠标按下事件处理
@@ -151,60 +107,143 @@ export function useDrag(targetRef: Ref<HTMLElement | null>, options: UseDragOpti
 
         // 如果移动距离超过阈值，才开始拖拽
         if (!hasStartedDrag && distance > DRAG_THRESHOLD) {
+            // 全局已有拖拽时不再重复进入，避免同一 mousemove 被多个 useDrag 处理导致第二次用错上下文（例如 tab 拖拽时 header 的 useDrag 也触发）
+            if (dragContext.getCurrentDrag().value) return;
+
             hasStartedDrag = true;
             isDragging.value = true;
 
-            // 创建拖拽预览元素
-            if (targetRef.value) {
-                // 计算预览元素的初始位置（考虑鼠标偏移）
-                const ghostX = e.clientX - offsetX;
-                const ghostY = e.clientY - offsetY;
-                
-                // 创建预览元素（直接传入位置）
-                ghostElement = createGhostElement(targetRef.value, ghostX, ghostY);
-                
-                // 设置原元素半透明（但不移动它）
-                originalOpacity = targetRef.value.style.opacity || '';
-                targetRef.value.style.opacity = '0.5';
-                targetRef.value.style.pointerEvents = 'none';
-                
-                currentX = ghostX;
-                currentY = ghostY;
+            const baseData = typeof data === 'object' && data !== null ? data : {};
+            let dragPayload: Record<string, unknown> = { ...baseData, dragOffset: { x: offsetX, y: offsetY } };
+            const store = useDockStore();
+            // “整窗跟随”的 rect：取所在 panel 的视口位置（.panel 为 Panel 根），无则用当前元素
+            const windowRect = targetRef.value?.closest?.('.panel')?.getBoundingClientRect?.() ?? targetRef.value?.getBoundingClientRect?.();
+
+            // 整窗跟随时统一结构：{ ...baseData, floatGroupId, dragOffset }，便于 attachFloatMoveHandlers / useDragDrop 等统一处理
+            if (type === 'panel') {
+                const loc = store.findPanelLocation(id);
+                if (loc?.type === 'float') {
+                    const fg = store.floatPanelGroups.find((f: { id: string }) => f.id === loc.floatGroupId) as { x: number; y: number } | undefined;
+                    if (fg) {
+                        dragPayload = {
+                            ...baseData,
+                            floatGroupId: loc.floatGroupId,
+                            dragOffset: { x: startMouseX - fg.x, y: startMouseY - fg.y },
+                        };
+                    }
+                } else if (loc?.type === 'container' && windowRect) {
+                    const floatGroupId = store.createFloatWindow(id, windowRect.left, windowRect.top);
+                    if (floatGroupId) {
+                        dragPayload = {
+                            ...baseData,
+                            floatGroupId,
+                            dragOffset: { x: startMouseX - windowRect.left, y: startMouseY - windowRect.top },
+                        };
+                    }
+                }
+            } else if (type === 'tab') {
+                const panelId = (baseData as { panelId?: string }).panelId;
+                const panelLoc = panelId ? store.findPanelLocation(panelId) : null;
+                if (!panelLoc) {
+                    hasStartedDrag = false;
+                    isDragging.value = false;
+                    return;
+                }
+                // 当前拖拽所在面板的完整数据（含 id/name/width/height/tabs 等），拖拽的 tab 在 panel.tabs 中
+                const panel = (panelLoc as { panel?: Record<string, unknown> }).panel
+                    ?? (panelLoc.type === 'float'
+                        ? store.floatPanelGroups.find((f: { id: string }) => f.id === panelLoc.floatGroupId)?.groups?.find((g: { id: string }) => g.id === panelLoc.groupId)?.panels?.[panelLoc.panelIndex]
+                        : (() => {
+                            const c = store.dockContainers[panelLoc.containerKey as string];
+                            const g = c?.groups?.find((gr: { id: string }) => gr.id === panelLoc.groupId);
+                            return g?.panels?.[panelLoc.panelIndex];
+                        })());
+                if (!panel || typeof panel !== 'object') {
+                    hasStartedDrag = false;
+                    isDragging.value = false;
+                    return;
+                }
+                // tabs 中只放被拖拽出的 tab 本身，语义等同「把该 tab 单独放在一个只有它的面板里操作」，与拖拽仅有一个 tab 的面板一致
+                const allTabs = (panel as { tabs?: unknown[] }).tabs ?? [];
+                const draggedTab = allTabs.find((t: unknown) => (t as { id?: string })?.id === id);
+                const panelData = {
+                    ...panel,
+                    panelId: (panel as { id?: string }).id,
+                    tabs: draggedTab ? [draggedTab] : [],
+                } as Record<string, unknown>;
+
+                if (panelLoc.type === 'float') {
+                    console.log('11111111111-----float')
+
+                    const fg = store.floatPanelGroups.find((f: { id: string }) => f.id === panelLoc.floatGroupId) as { x: number; y: number; groups?: Array<{ id: string; panels: Array<{ tabs?: unknown[] }> }> } | undefined;
+                    const grp = fg?.groups?.find((g: { id: string }) => g.id === panelLoc.groupId);
+                    const tabCount = grp?.panels?.[panelLoc.panelIndex]?.tabs?.length ?? 0;
+                    if (tabCount === 1 && fg) {
+                        dragPayload = {
+                            ...panelData,
+                            floatGroupId: panelLoc.floatGroupId,
+                            dragOffset: { x: startMouseX - fg.x, y: startMouseY - fg.y },
+                        };
+                    } else if (tabCount > 1 && windowRect) {
+                        const floatGroupId = store.createFloatWindowFromTab(id, baseData, windowRect.left, windowRect.top);
+                        if (floatGroupId) {
+                            dragPayload = {
+                                ...panelData,
+                                floatGroupId,
+                                dragOffset: { x: startMouseX - windowRect.left, y: startMouseY - windowRect.top },
+                            };
+                        }
+                    }
+                } else if (panelLoc.type === 'container' && windowRect) {
+                    console.log('11111111111-----container')
+                    const floatGroupId = store.createFloatWindowFromTab(id, baseData, windowRect.left, windowRect.top);
+                    if (floatGroupId) {
+                        dragPayload = {
+                            ...panelData,
+                            floatGroupId,
+                            dragOffset: { x: startMouseX - windowRect.left, y: startMouseY - windowRect.top },
+                        };
+                    }
+                }
             }
 
-            // 通知全局拖拽上下文（只有真正拖拽时才调用）；注入点击相对元素的偏移，供浮窗落点“抓住的那点”保持 under 鼠标
-            dragContext.startDrag({
-              id,
-              type,
-              data: { ...(typeof data === 'object' && data !== null ? data : {}), dragOffset: { x: offsetX, y: offsetY } },
-            });
+            const isMovingFloat = !!(dragPayload as { floatGroupId?: string }).floatGroupId;
 
-            // 触发拖拽开始回调
+            console.log(dragPayload, 'dragPayload1111')
+            
+            dragContext.startDrag({ id, type, data: dragPayload });
             onDragStart?.({ x: currentX, y: currentY });
+
+            // 整窗跟随时（含 dock 内临时转浮窗）：把 mousemove/mouseup 交给全局，避免源组件卸载后丢失焦点
+            if (isMovingFloat) {
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+                const d = dragPayload as { floatGroupId: string; dragOffset: { x: number; y: number } };
+                dragContext.attachFloatMoveHandlers(d.floatGroupId, d.dragOffset);
+            }
         }
 
-        // 只有真正开始拖拽后才处理移动
+
         if (!hasStartedDrag) return;
 
         e.preventDefault();
 
-        // 计算预览元素的新位置（考虑鼠标偏移）
+        // panel/tab 整窗跟随（含浮窗内拖、dock 内拖起即转浮窗）：直接更新浮窗位置
+        const current = dragContext.getCurrentDrag().value;
+        const fid = (current?.data as { floatGroupId?: string })?.floatGroupId;
+        if (fid && (current?.type === 'panel' || current?.type === 'tab')) {
+            const store = useDockStore();
+            const d = current.data as { floatGroupId: string; dragOffset: { x: number; y: number } };
+            store.moveFloatWindow(d.floatGroupId, e.clientX - d.dragOffset.x, e.clientY - d.dragOffset.y);
+            return;
+        }
+
         const newX = e.clientX - offsetX;
         const newY = e.clientY - offsetY;
         currentX = newX;
         currentY = newY;
-
-        // 更新预览元素位置
-        if (ghostElement) {
-            ghostElement.style.left = `${newX}px`;
-            ghostElement.style.top = `${newY}px`;
-        }
-
-        // 只在需要时更新响应式数据（用于显示）
         position.value.x = currentX;
         position.value.y = currentY;
-
-        // 触发拖拽中回调
         onDragging?.({ x: currentX, y: currentY });
     };
 
@@ -220,16 +259,6 @@ export function useDrag(targetRef: Ref<HTMLElement | null>, options: UseDragOpti
         if (hasStartedDrag) {
             isDragging.value = false;
 
-            // 移除拖拽预览元素
-            removeGhostElement();
-
-            // 恢复原元素样式
-            if (targetRef.value) {
-                targetRef.value.style.opacity = originalOpacity;
-                targetRef.value.style.pointerEvents = '';
-                targetRef.value.style.willChange = 'auto';
-            }
-
             // 通知全局拖拽上下文结束（只有真正拖拽过才调用）
             dragContext.endDrag();
 
@@ -239,7 +268,6 @@ export function useDrag(targetRef: Ref<HTMLElement | null>, options: UseDragOpti
             position.value = { x: 0, y: 0 };
             offsetX = 0;
             offsetY = 0;
-            originalOpacity = '';
 
             // 触发拖拽结束回调
             onDragEnd?.({ x: 0, y: 0 });
@@ -307,17 +335,7 @@ export function useDrag(targetRef: Ref<HTMLElement | null>, options: UseDragOpti
         // 清理全局监听
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
-        
-        // 如果还在拖拽，清理预览元素和恢复原元素样式
-        if (hasStartedDrag) {
-            removeGhostElement();
-            
-            if (targetRef.value) {
-                targetRef.value.style.opacity = originalOpacity;
-                targetRef.value.style.pointerEvents = '';
-                targetRef.value.style.willChange = 'auto';
-            }
-        }
+
         currentElement = null;
     };
 

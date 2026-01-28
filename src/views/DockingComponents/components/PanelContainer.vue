@@ -47,7 +47,7 @@
                 v-for="item in container" 
                 :key="item.id" 
                 class="float-item"
-                :style="getFloatItemStyle(item)"
+                :style="getFloatItemStyleWithPointer(item)"
             >
                 <!-- item.groups 为空或 null 时：仅显示一个占满的 before-0 热区 -->
                 <div
@@ -128,6 +128,26 @@ const getFloatItemStyle = (item: any) => {
     return styles;
 };
 
+// 当前拖拽信息（用于浮窗整体拖动时对该浮窗做鼠标穿透，使下方热区可被触达）
+const currentDrag = computed(() => dragContext.getCurrentDrag().value);
+
+// 浮动项样式 + 正在被整体拖动（panel 或 tab 整窗跟随）时 pointer-events: none，实现鼠标穿透
+const getFloatItemStyleWithPointer = (item: any) => {
+    const base = getFloatItemStyle(item);
+    const fid = (currentDrag.value?.data as { floatGroupId?: string } | undefined)?.floatGroupId;
+
+    // console.log(fid, 'fid1111-----11111')
+    // console.log(currentDrag.value, 'fid1111-----2222')
+    // console.log(item, 'fid1111-----3333')
+    const isThisFloatBeingDragged =
+        (currentDrag.value?.type === 'panel' || currentDrag.value?.type === 'tab') && fid === item.id;
+    // console.log(isThisFloatBeingDragged, 'fid1111-----4444')
+        // console.log({ ...base, pointerEvents: 'none'})
+
+        // console.log(isThisFloatBeingDragged, 'isThisFloatBeingDragged1111')
+    return { ...base, pointerEvents: isThisFloatBeingDragged ? 'none' : 'auto' } as const;
+};
+
 // 容器引用
 const containerRef = ref<HTMLElement | null>(null);
 
@@ -168,6 +188,7 @@ const dropZone = useDropZone(containerRef, {
     allowedPositions: allowedPositions as any,
     dropZoneClass: 'drop-zone-container',
     onEnter: (position) => {
+        console.log(position, 'position1111-----进入热区')
         dragDrop.registerDropZone({
             scenario: 'panelContainer',
             position,

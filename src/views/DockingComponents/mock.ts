@@ -436,38 +436,38 @@ export const mockData = {
         
 
     floatPanelGroups: [
-        // {
-        //     id: 'float_panel_group_01',
-        //     position: 'float',
-        //     x: 10,
-        //     y: 10,
-        //     groups: [
-        //         {
-        //             id: 'group_float_01',
-        //             direction: 'column',
-        //             width: 200,
-        //             height: 200,
-        //             panels: [
-        //                 {
-        //                     id: 'panel_float_11',
-        //                     name: '浮动窗体1-面板1',
-        //                     width: 200,
-        //                     height: 200,
-        //                     originalWidth: 200,
-        //                     originalHeight: 200,
-        //                     minWidth: 100,
-        //                     minHeight: 80,
-        //                     maxWidth: 800,
-        //                     maxHeight: 400,
-        //                     tabs: [
-        //                         { id: 'tab_float_11_1', title: '浮动标签1-1', component: 'PanelRight01' },
-        //                         { id: 'tab_float_11_2', title: '浮动标签1-2', component: 'PanelRight02' }
-        //                     ]
-        //                 },
-        //             ],
-        //         },
-        //     ],
-        // },
+        {
+            id: 'float_panel_group_01',
+            position: 'float',
+            x: 10,
+            y: 10,
+            groups: [
+                {
+                    id: 'group_float_01',
+                    direction: 'column',
+                    width: 200,
+                    height: 200,
+                    panels: [
+                        {
+                            id: 'panel_float_11',
+                            name: '浮动窗体1-面板1',
+                            width: 200,
+                            height: 200,
+                            originalWidth: 200,
+                            originalHeight: 200,
+                            minWidth: 100,
+                            minHeight: 80,
+                            maxWidth: 800,
+                            maxHeight: 400,
+                            tabs: [
+                                { id: 'tab_float_11_1', title: '浮动标签1-1', component: 'PanelRight01' },
+                                { id: 'tab_float_11_2', title: '浮动标签1-2', component: 'PanelRight02' }
+                            ]
+                        },
+                    ],
+                },
+            ],
+        },
         // {
         //     id: 'float_panel_group_02',
         //     position: 'float',

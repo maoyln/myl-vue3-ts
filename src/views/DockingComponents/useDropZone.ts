@@ -83,13 +83,21 @@ export function useDropZone(
     };
 
     /**
-     * 热区离开事件处理
+     * 热区离开事件处理。
+     * 当 e 存在时：若鼠标下仍是同位置的逻辑热区（如因重渲染导致旧节点被替换为新节点），
+     * 则认为是“假离开”，不调用 onLeave，避免 container 拖 tab 触发热区后被误清导致无法吸附。
      */
-    const handleZoneLeave = (position: DropPosition) => {
-        if (activePosition.value === position) {
-            onLeave?.(position);
-            activePosition.value = null;
+    const handleZoneLeave = (position: DropPosition, e?: MouseEvent) => {
+        if (activePosition.value !== position) return;
+        if (e && containerRef.value) {
+            const under = document.elementFromPoint(e.clientX, e.clientY);
+            const selector = `.${dropZoneClass}[data-drop-zone="${position}"]`;
+            if (under?.closest(selector) && containerRef.value.contains(under)) {
+                return; // 仍在同位置热区（多为重渲染后的新节点），不视为离开
+            }
         }
+        onLeave?.(position);
+        activePosition.value = null;
     };
 
     /**
@@ -105,7 +113,7 @@ export function useDropZone(
         
         const leaveHandler = (e: MouseEvent) => {
             e.stopPropagation();
-            handleZoneLeave(position);
+            handleZoneLeave(position, e);
         };
 
         eventHandlers.set(position, {
