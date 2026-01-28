@@ -409,7 +409,7 @@ onUnmounted(() => {
 
 .tabs-header.is-dragging {
     opacity: 0.8;
-    cursor: move;
+    /* cursor: move; */
 }
 
 /* flex: 0 0 auto 保持按内容宽度，拖拽时热区出现/消失不会导致 item 被重新分配宽度 */
@@ -438,7 +438,7 @@ onUnmounted(() => {
 
 .tab-header-item.is-dragging {
     opacity: 0.8;
-    cursor: move;
+    /* cursor: move; */
     background-color: #e0f0ff;
 }
 

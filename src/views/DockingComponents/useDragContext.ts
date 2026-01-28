@@ -31,12 +31,18 @@ class DragContext {
     /** 整窗跟随时由 context 接管的 document 监听，源组件卸载后仍可继续移动/结束 */
     private floatMoveListeners: FloatMoveListeners | null = null;
 
+    /** 拖拽前保存的 body cursor，用于结束后恢复 */
+    private savedBodyCursor = '';
+
     /**
      * 开始拖拽
      */
     startDrag(info: DragInfo) {
         this.currentDrag.value = info;
-        // 调用拖拽开始回调
+        if (typeof document !== 'undefined' && document.body) {
+            this.savedBodyCursor = document.body.style.cursor;
+            document.body.style.cursor = 'move';
+        }
         if (this.dragStartCallback) {
             this.dragStartCallback();
         }
@@ -54,17 +60,16 @@ class DragContext {
      */
     endDrag() {
         const prevDrag = this.currentDrag.value;
-        
-        // 通知所有热区处理器
+        if (typeof document !== 'undefined' && document.body) {
+            document.body.style.cursor = this.savedBodyCursor;
+            this.savedBodyCursor = '';
+        }
         this.dropHandlers.forEach(handler => {
             handler();
         });
-        
-        // 调用拖拽结束回调（统一处理放置逻辑）
         if (prevDrag && this.dragEndCallback) {
             this.dragEndCallback(prevDrag);
         }
-        
         this.currentDrag.value = null;
     }
 
@@ -116,13 +121,28 @@ class DragContext {
 
     /**
      * 整窗跟随时将 mousemove/mouseup 交给全局接管，避免源组件（dock 内 panel/tab）卸载后丢失焦点
-     * 由 useDrag 在“刚转为整窗跟随”时调用，之后由 context 负责移动浮窗与 endDrag
+     * 支持 dragOffsetPercentX：从 dock 拖出时仅宽度可能变化，用 x 方向百分比换算抓住点，高度用像素
      */
-    attachFloatMoveHandlers(floatGroupId: string, dragOffset: { x: number; y: number }) {
+    attachFloatMoveHandlers(
+        floatGroupId: string,
+        options: {
+            dragOffset: { x: number; y: number };
+            dragOffsetPercentX?: number;
+        }
+    ) {
         this.removeFloatMoveListeners();
         const store = useDockStore();
         const move = (e: MouseEvent) => {
-            store.moveFloatWindow(floatGroupId, e.clientX - dragOffset.x, e.clientY - dragOffset.y);
+            let offsetX: number;
+            const offsetY = options.dragOffset.y;
+            if (options.dragOffsetPercentX != null) {
+                const fg = store.floatPanelGroups.find((f: { id: string }) => f.id === floatGroupId) as { groups?: Array<{ width?: number }> } | undefined;
+                const w = fg?.groups?.[0]?.width ?? 1;
+                offsetX = options.dragOffsetPercentX * w;
+            } else {
+                offsetX = options.dragOffset.x;
+            }
+            store.moveFloatWindow(floatGroupId, e.clientX - offsetX, e.clientY - offsetY);
             e.preventDefault();
         };
         const up = () => {

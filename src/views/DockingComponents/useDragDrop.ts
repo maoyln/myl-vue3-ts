@@ -40,6 +40,22 @@ class DragDropHandler {
   }
 
   /**
+   * 根据 data 计算落点用的像素偏移：仅 x 方向可能用百分比换算（宽度缩放），y 始终用像素
+   */
+  private getDropOffset(data: { dragOffset?: { x: number; y: number }; dragOffsetPercentX?: number }, floatGroupId?: string): { x: number; y: number } | undefined {
+    if (!data.dragOffset) return undefined;
+    if (data.dragOffsetPercentX != null && floatGroupId) {
+      const fg = this.store.floatPanelGroups.find((f: { id: string }) => f.id === floatGroupId) as { groups?: Array<{ width?: number }> } | undefined;
+      const w = fg?.groups?.[0]?.width ?? 1;
+      return {
+        x: data.dragOffsetPercentX * w,
+        y: data.dragOffset.y,
+      };
+    }
+    return data.dragOffset;
+  }
+
+  /**
    * 统一处理拖拽放置
    */
   private handleDrop(prevDrag: { id: string; type: string; data?: any }) {
@@ -79,12 +95,12 @@ class DragDropHandler {
           }
         }
       } 
-      // 没有激活的热区：若已是整窗跟随（floatGroupId）则只移动该浮窗；否则创建新浮动窗口。落点 = 鼠标释放位置 - 按下时相对偏移，使“抓住的那点”仍在鼠标下
+      // 没有激活的热区：若已是整窗跟随（floatGroupId）则只移动该浮窗；否则创建新浮动窗口。落点 = 鼠标释放位置 - 偏移（像素或按百分比换算）
       else if (this.dropPosition) {
-        const off = prevDrag.data?.dragOffset;
+        const floatGroupId = prevDrag.data?.floatGroupId;
+        const off = this.getDropOffset(prevDrag.data ?? {}, floatGroupId);
         const x = off ? this.dropPosition.x - off.x : this.dropPosition.x;
         const y = off ? this.dropPosition.y - off.y : this.dropPosition.y;
-        const floatGroupId = prevDrag.data?.floatGroupId;
         if (floatGroupId) {
           this.store.moveFloatWindow(floatGroupId, x, y);
         } else {
@@ -119,12 +135,12 @@ class DragDropHandler {
           }
         }
       } 
-      // 没有激活的热区：若来自浮窗内则只移动该浮窗；否则创建新浮动窗口。落点 = 鼠标释放位置 - 按下时相对偏移，使“抓住的那点”仍在鼠标下
+      // 没有激活的热区：若来自浮窗内则只移动该浮窗；否则创建新浮动窗口。落点 = 鼠标释放位置 - 偏移（像素或按百分比换算）
       else if (this.dropPosition) {
-        const off = prevDrag.data?.dragOffset;
+        const floatGroupId = prevDrag.data?.floatGroupId;
+        const off = this.getDropOffset(prevDrag.data ?? {}, floatGroupId);
         const x = off ? this.dropPosition.x - off.x : this.dropPosition.x;
         const y = off ? this.dropPosition.y - off.y : this.dropPosition.y;
-        const floatGroupId = prevDrag.data?.floatGroupId;
         if (floatGroupId) {
           this.store.moveFloatWindow(floatGroupId, x, y);
         } else {

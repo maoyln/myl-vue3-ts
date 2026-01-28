@@ -140,20 +140,20 @@ export const mockData = {
                 {
                     id: 'group_right_01',
                     direction: 'row',
-                    width: 200,
-                    height: 200,
+                    width: 400,
+                    height: 400,
                     panels: [
                         { 
                             id: 'panel_right_11', 
                             name: '面板-right11',
-                            width: 200,
-                            height: 150,
-                            originalWidth: 200,
-                            originalHeight: 150,
-                            minWidth: 100,
-                            minHeight: 80,
-                            maxWidth: 800,
-                            maxHeight: 400,
+                            width: 200, // 面板宽度
+                            height: 150, // 面板高度
+                            originalWidth: 200, // 面板原始宽度
+                            originalHeight: 150, // 面板原始高度
+                            minWidth: 100, // 面板最小宽度
+                            minHeight: 80, // 面板最小高度
+                            maxWidth: 800, // 面板最大宽度
+                            maxHeight: 400, // 面板最大高度
                             tabs: [
                                 { id: 'tab_right_01', title: '标签1', component: 'PanelRight01' },
                                 { id: 'tab_right_02', title: '标签2', component: 'PanelRight02' }
@@ -523,7 +523,7 @@ export const mockData = {
 /** 停靠布局全局配置 */
 export const dockConfig = {
   /** 从非浮窗拖出创建新浮窗时的默认宽度 */
-  defaultFloatWindowWidth: 320,
+  defaultFloatWindowWidth: 800,
   /** 从非浮窗拖出创建新浮窗时的默认高度 */
-  defaultFloatWindowHeight: 240,
+  defaultFloatWindowHeight: 600,
 };

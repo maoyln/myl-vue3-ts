@@ -118,13 +118,18 @@ export function useDrag(targetRef: Ref<HTMLElement | null>, options: UseDragOpti
             const store = useDockStore();
             // “整窗跟随”的 rect：取所在 panel 的视口位置（.panel 为 Panel 根），无则用当前元素
             const windowRect = targetRef.value?.closest?.('.panel')?.getBoundingClientRect?.() ?? targetRef.value?.getBoundingClientRect?.();
-
+            // tab 拖拽时：记录鼠标在 tab 标签内的偏移 (offsetInTab)，新浮窗内该 tab 在 (0,0)，故 dragOffset = offsetInTab 可使光标始终在 tab 的同一相对位置
+            const tabRect = type === 'tab' ? targetRef.value?.getBoundingClientRect?.() : undefined;
+            const offsetInTab = tabRect
+                ? { x: startMouseX - tabRect.left, y: startMouseY - tabRect.top }
+                : null;
             // 整窗跟随时统一结构：{ ...baseData, floatGroupId, dragOffset }，便于 attachFloatMoveHandlers / useDragDrop 等统一处理
             if (type === 'panel') {
                 const loc = store.findPanelLocation(id);
                 if (loc?.type === 'float') {
                     const fg = store.floatPanelGroups.find((f: { id: string }) => f.id === loc.floatGroupId) as { x: number; y: number } | undefined;
                     if (fg) {
+                        store.bringFloatToFront(loc.floatGroupId);
                         dragPayload = {
                             ...baseData,
                             floatGroupId: loc.floatGroupId,
@@ -134,10 +139,12 @@ export function useDrag(targetRef: Ref<HTMLElement | null>, options: UseDragOpti
                 } else if (loc?.type === 'container' && windowRect) {
                     const floatGroupId = store.createFloatWindow(id, windowRect.left, windowRect.top);
                     if (floatGroupId) {
+                        const w = Math.max(1, windowRect.width);
                         dragPayload = {
                             ...baseData,
                             floatGroupId,
                             dragOffset: { x: startMouseX - windowRect.left, y: startMouseY - windowRect.top },
+                            dragOffsetPercentX: (startMouseX - windowRect.left) / w,
                         };
                     }
                 }
@@ -173,12 +180,11 @@ export function useDrag(targetRef: Ref<HTMLElement | null>, options: UseDragOpti
                 } as Record<string, unknown>;
 
                 if (panelLoc.type === 'float') {
-                    console.log('11111111111-----float')
-
                     const fg = store.floatPanelGroups.find((f: { id: string }) => f.id === panelLoc.floatGroupId) as { x: number; y: number; groups?: Array<{ id: string; panels: Array<{ tabs?: unknown[] }> }> } | undefined;
                     const grp = fg?.groups?.find((g: { id: string }) => g.id === panelLoc.groupId);
                     const tabCount = grp?.panels?.[panelLoc.panelIndex]?.tabs?.length ?? 0;
                     if (tabCount === 1 && fg) {
+                        store.bringFloatToFront(panelLoc.floatGroupId);
                         dragPayload = {
                             ...panelData,
                             floatGroupId: panelLoc.floatGroupId,
@@ -187,21 +193,24 @@ export function useDrag(targetRef: Ref<HTMLElement | null>, options: UseDragOpti
                     } else if (tabCount > 1 && windowRect) {
                         const floatGroupId = store.createFloatWindowFromTab(id, baseData, windowRect.left, windowRect.top);
                         if (floatGroupId) {
+                            // 新浮窗内该 tab 在 (0,0)，抓住点 = 鼠标在 tab 内的偏移，保持光标在 tab 的同一相对位置
+                            const offset = offsetInTab ?? { x: startMouseX - windowRect.left, y: startMouseY - windowRect.top };
                             dragPayload = {
                                 ...panelData,
                                 floatGroupId,
-                                dragOffset: { x: startMouseX - windowRect.left, y: startMouseY - windowRect.top },
+                                dragOffset: offset,
                             };
                         }
                     }
                 } else if (panelLoc.type === 'container' && windowRect) {
-                    console.log('11111111111-----container')
                     const floatGroupId = store.createFloatWindowFromTab(id, baseData, windowRect.left, windowRect.top);
                     if (floatGroupId) {
+                        // 新浮窗内该 tab 在 (0,0)，抓住点 = 鼠标在 tab 内的偏移
+                        const offset = offsetInTab ?? { x: startMouseX - windowRect.left, y: startMouseY - windowRect.top };
                         dragPayload = {
                             ...panelData,
                             floatGroupId,
-                            dragOffset: { x: startMouseX - windowRect.left, y: startMouseY - windowRect.top },
+                            dragOffset: offset,
                         };
                     }
                 }
@@ -209,8 +218,6 @@ export function useDrag(targetRef: Ref<HTMLElement | null>, options: UseDragOpti
 
             const isMovingFloat = !!(dragPayload as { floatGroupId?: string }).floatGroupId;
 
-            console.log(dragPayload, 'dragPayload1111')
-            
             dragContext.startDrag({ id, type, data: dragPayload });
             onDragStart?.({ x: currentX, y: currentY });
 
@@ -218,8 +225,15 @@ export function useDrag(targetRef: Ref<HTMLElement | null>, options: UseDragOpti
             if (isMovingFloat) {
                 document.removeEventListener('mousemove', handleMouseMove);
                 document.removeEventListener('mouseup', handleMouseUp);
-                const d = dragPayload as { floatGroupId: string; dragOffset: { x: number; y: number } };
-                dragContext.attachFloatMoveHandlers(d.floatGroupId, d.dragOffset);
+                const d = dragPayload as {
+                    floatGroupId: string;
+                    dragOffset: { x: number; y: number };
+                    dragOffsetPercentX?: number;
+                };
+                dragContext.attachFloatMoveHandlers(d.floatGroupId, {
+                    dragOffset: d.dragOffset,
+                    dragOffsetPercentX: d.dragOffsetPercentX,
+                });
             }
         }
 

@@ -442,6 +442,16 @@ export const useDockStore = defineStore('dock', {
     },
 
     /**
+     * 将指定浮窗置于最前（不被其他浮窗盖住），最后操作的浮窗保持在最上层
+     */
+    bringFloatToFront(floatGroupId: string) {
+      const index = this.floatPanelGroups.findIndex(f => f.id === floatGroupId);
+      if (index === -1 || index === this.floatPanelGroups.length - 1) return;
+      const [fg] = this.floatPanelGroups.splice(index, 1);
+      this.floatPanelGroups.push(fg);
+    },
+
+    /**
      * 从 tab 创建新的 panel，并添加到指定的 PanelGroup
      */
     createPanelFromTab(

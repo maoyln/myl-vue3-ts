@@ -48,6 +48,7 @@
                 :key="item.id" 
                 class="float-item"
                 :style="getFloatItemStyleWithPointer(item)"
+                @mousedown="onFloatItemMouseDown(item.id)"
             >
                 <!-- item.groups 为空或 null 时：仅显示一个占满的 before-0 热区 -->
                 <div
@@ -86,6 +87,7 @@ import PanelGroup from './PanelGroup.vue';
 import { useDropZone } from '../useDropZone';
 import { useDragDrop } from '../useDragDrop';
 import { useDragContext } from '../useDragContext';
+import { useDockStore } from '../useDockStore';
 
 const props = defineProps<{
     direction: 'row' | 'column';
@@ -135,16 +137,8 @@ const currentDrag = computed(() => dragContext.getCurrentDrag().value);
 const getFloatItemStyleWithPointer = (item: any) => {
     const base = getFloatItemStyle(item);
     const fid = (currentDrag.value?.data as { floatGroupId?: string } | undefined)?.floatGroupId;
-
-    // console.log(fid, 'fid1111-----11111')
-    // console.log(currentDrag.value, 'fid1111-----2222')
-    // console.log(item, 'fid1111-----3333')
     const isThisFloatBeingDragged =
         (currentDrag.value?.type === 'panel' || currentDrag.value?.type === 'tab') && fid === item.id;
-    // console.log(isThisFloatBeingDragged, 'fid1111-----4444')
-        // console.log({ ...base, pointerEvents: 'none'})
-
-        // console.log(isThisFloatBeingDragged, 'isThisFloatBeingDragged1111')
     return { ...base, pointerEvents: isThisFloatBeingDragged ? 'none' : 'auto' } as const;
 };
 
@@ -154,6 +148,12 @@ const containerRef = ref<HTMLElement | null>(null);
 // 使用拖拽处理 hooks
 const dragDrop = useDragDrop();
 const dragContext = useDragContext();
+const dockStore = useDockStore();
+
+// 点击浮窗时置顶，使最后操作的弹窗不被其他弹窗盖住
+function onFloatItemMouseDown(floatGroupId: string) {
+    dockStore.bringFloatToFront(floatGroupId);
+}
 
 // 动态生成允许的热区位置（groups 为空或 null 时也包含 before-0，便于拖入）
 const allowedPositions = computed(() => {
@@ -188,7 +188,6 @@ const dropZone = useDropZone(containerRef, {
     allowedPositions: allowedPositions as any,
     dropZoneClass: 'drop-zone-container',
     onEnter: (position) => {
-        console.log(position, 'position1111-----进入热区')
         dragDrop.registerDropZone({
             scenario: 'panelContainer',
             position,
